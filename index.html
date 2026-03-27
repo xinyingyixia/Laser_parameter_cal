@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="Laser plasma calculator for pulse energy, focal spot, pulse duration, intensity, a0, wavelength, and critical density." />
+  <meta name="description" content="Laser plasma calculator for pulse energy, focal spot, pulse duration, intensity, a0, wavelength, critical density, and electron temperature conversion." />
   <title>Laser Plasma Calculator</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -13,13 +13,14 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.42/dist/katex.min.css" crossorigin="anonymous">
   <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.42/dist/katex.min.js" crossorigin="anonymous"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.42/dist/contrib/auto-render.min.js" crossorigin="anonymous"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/dist/html-to-image.min.js"></script>
 
   <style>
     :root {
       --bg-1: #0b1220;
       --bg-2: #0f1728;
       --panel: rgba(14, 22, 37, 0.9);
-      --panel-strong: rgba(17, 28, 46, 0.96);
+      --panel-strong: rgba(16, 25, 41, 0.96);
       --border: rgba(148, 163, 184, 0.14);
       --text: #eef3fb;
       --muted: #94a3b8;
@@ -34,17 +35,29 @@
       --success-soft: rgba(23, 165, 137, 0.12);
       --warning: #d97706;
       --warning-soft: rgba(217, 119, 6, 0.12);
-      --danger: #dc2626;
-      --danger-soft: rgba(220, 38, 38, 0.12);
-      --input-tag: rgba(243, 119, 38, 0.16);
+      --danger: #ef4444;
+      --danger-strong: #dc2626;
+      --danger-soft: rgba(239, 68, 68, 0.14);
+      --danger-border: rgba(248, 113, 113, 0.42);
+      --input-tag: rgba(243, 119, 38, 0.12);
       --input-tag-text: #ffd7bc;
-      --derived-tag: rgba(23, 165, 137, 0.16);
-      --derived-tag-text: #d5fff2;
+      --derived-tag: rgba(34, 197, 94, 0.11);
+      --derived-tag-text: #d9ffea;
       --missing-tag: rgba(148, 163, 184, 0.16);
       --missing-tag-text: #d8e0ec;
       --radius-xl: 26px;
       --radius-lg: 20px;
       --radius-md: 14px;
+      --results-surface: linear-gradient(180deg, rgba(19, 28, 45, 0.95), rgba(14, 20, 33, 0.98));
+      --results-card: linear-gradient(180deg, rgba(255,255,255,0.055), rgba(255,255,255,0.022));
+      --results-card-border: rgba(226, 232, 240, 0.1);
+      --results-card-shadow: 0 14px 32px rgba(2, 6, 23, 0.18);
+      --results-card-hover: translateY(-1px);
+      --result-value: #f8fbff;
+      --result-label: #c9d3e2;
+      --state-input-accent: rgba(243, 119, 38, 0.88);
+      --state-derived-accent: rgba(22, 163, 74, 0.85);
+      --state-missing-accent: rgba(148, 163, 184, 0.42);
     }
 
     html[data-theme="light"] {
@@ -66,14 +79,25 @@
       --success-soft: rgba(15, 143, 119, 0.1);
       --warning: #c46b08;
       --warning-soft: rgba(196, 107, 8, 0.1);
-      --danger: #c92b2b;
-      --danger-soft: rgba(201, 43, 43, 0.1);
-      --input-tag: rgba(243, 119, 38, 0.14);
+      --danger: #dc2626;
+      --danger-strong: #b91c1c;
+      --danger-soft: rgba(220, 38, 38, 0.1);
+      --danger-border: rgba(220, 38, 38, 0.22);
+      --input-tag: rgba(243, 119, 38, 0.11);
       --input-tag-text: #8c4616;
-      --derived-tag: rgba(15, 143, 119, 0.12);
+      --derived-tag: rgba(15, 143, 119, 0.1);
       --derived-tag-text: #0e6d5b;
       --missing-tag: rgba(107, 114, 128, 0.12);
       --missing-tag-text: #5f6877;
+      --results-surface: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(247,249,252,0.98));
+      --results-card: linear-gradient(180deg, rgba(255,255,255,1), rgba(248,250,252,0.98));
+      --results-card-border: rgba(15, 23, 42, 0.08);
+      --results-card-shadow: 0 16px 26px rgba(15, 23, 42, 0.06);
+      --result-value: #111827;
+      --result-label: #475569;
+      --state-input-accent: rgba(243, 119, 38, 0.82);
+      --state-derived-accent: rgba(15, 143, 119, 0.82);
+      --state-missing-accent: rgba(107, 114, 128, 0.35);
     }
 
     * { box-sizing: border-box; }
@@ -331,10 +355,40 @@
       background: var(--danger-soft);
     }
 
+    .status-box.conflict {
+      border: 1.5px solid var(--danger-border);
+      background:
+        linear-gradient(180deg, rgba(239, 68, 68, 0.18), rgba(127, 29, 29, 0.14)),
+        var(--danger-soft);
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.04),
+        0 12px 26px rgba(127, 29, 29, 0.14);
+    }
+
+    html[data-theme="light"] .status-box.conflict {
+      background:
+        linear-gradient(180deg, rgba(254, 226, 226, 0.95), rgba(254, 242, 242, 0.98)),
+        var(--danger-soft);
+      box-shadow: 0 10px 18px rgba(185, 28, 28, 0.08);
+    }
+
     .status-box h3 {
       margin: 0 0 8px;
       font-size: 14px;
       letter-spacing: 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .status-box.conflict h3 {
+      color: #ffe3e3;
+      font-size: 15px;
+      font-weight: 800;
+    }
+
+    html[data-theme="light"] .status-box.conflict h3 {
+      color: #991b1b;
     }
 
     .status-box ul {
@@ -346,10 +400,31 @@
 
     .status-box li + li { margin-top: 6px; }
 
+    .status-box.conflict ul {
+      color: #ffe9e9;
+    }
+
+    html[data-theme="light"] .status-box.conflict ul {
+      color: #7f1d1d;
+    }
+
+    .status-box.conflict strong {
+      color: #ffffff;
+    }
+
+    html[data-theme="light"] .status-box.conflict strong {
+      color: #991b1b;
+    }
+
     .results-panel {
       position: sticky;
       top: 18px;
-      background: var(--panel-strong);
+      background: var(--results-surface);
+      border: 1px solid rgba(226, 232, 240, 0.08);
+    }
+
+    html[data-theme="light"] .results-panel {
+      border-color: rgba(15, 23, 42, 0.06);
     }
 
     .results-grid {
@@ -362,41 +437,52 @@
     .result-card {
       position: relative;
       overflow: hidden;
-      min-height: 128px;
-      border-radius: 20px;
+      min-height: 138px;
+      border-radius: 22px;
       padding: 16px;
-      border: 1px solid var(--border);
-      background: linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02));
+      border: 1px solid var(--results-card-border);
+      background: var(--results-card);
+      box-shadow: var(--results-card-shadow);
+      transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
     }
 
-    html[data-theme="light"] .result-card {
-      background: linear-gradient(180deg, rgba(255,255,255,1), rgba(248,250,252,0.98));
+    .result-card:hover {
+      transform: var(--results-card-hover);
+      box-shadow: 0 18px 36px rgba(2, 6, 23, 0.2);
     }
 
-    .result-card::after {
+    html[data-theme="light"] .result-card:hover {
+      box-shadow: 0 18px 30px rgba(15, 23, 42, 0.08);
+    }
+
+    .result-card::before {
       content: "";
       position: absolute;
-      right: -16px;
-      bottom: -24px;
-      width: 96px;
-      height: 96px;
-      border-radius: 50%;
-      background: radial-gradient(circle, rgba(243, 119, 38, 0.14), transparent 66%);
-      pointer-events: none;
+      inset: 0 auto auto 0;
+      width: 100%;
+      height: 3px;
+      background: var(--state-missing-accent);
+      opacity: 0.95;
     }
+
+    .result-card.state-input::before { background: var(--state-input-accent); }
+    .result-card.state-derived::before { background: var(--state-derived-accent); }
+    .result-card.state-missing::before { background: var(--state-missing-accent); }
 
     .result-head {
       display: flex;
-      align-items: center;
+      align-items: flex-start;
       justify-content: space-between;
       gap: 10px;
-      margin-bottom: 14px;
+      margin-bottom: 18px;
     }
 
     .result-label {
-      font-size: 15px;
+      font-size: 14px;
       font-weight: 700;
       min-height: 22px;
+      color: var(--result-label);
+      letter-spacing: -0.01em;
     }
 
     .tag {
@@ -405,34 +491,53 @@
       justify-content: center;
       border-radius: 999px;
       padding: 6px 10px;
-      font-size: 11px;
+      font-size: 10px;
       font-weight: 800;
-      letter-spacing: 0.03em;
+      letter-spacing: 0.08em;
       text-transform: uppercase;
       white-space: nowrap;
+      border: 1px solid transparent;
     }
 
-    .tag.input { background: var(--input-tag); color: var(--input-tag-text); }
-    .tag.derived { background: var(--derived-tag); color: var(--derived-tag-text); }
-    .tag.missing { background: var(--missing-tag); color: var(--missing-tag-text); }
+    .tag.input {
+      background: rgba(243, 119, 38, 0.08);
+      color: var(--input-tag-text);
+      border-color: rgba(243, 119, 38, 0.18);
+    }
+
+    .tag.derived {
+      background: rgba(34, 197, 94, 0.09);
+      color: var(--derived-tag-text);
+      border-color: rgba(34, 197, 94, 0.16);
+    }
+
+    .tag.missing {
+      background: rgba(148, 163, 184, 0.08);
+      color: var(--missing-tag-text);
+      border-color: rgba(148, 163, 184, 0.15);
+    }
 
     .result-value {
-      font-size: 20px;
-      line-height: 1.25;
+      font-size: 28px;
+      line-height: 1.16;
       font-weight: 800;
-      letter-spacing: -0.03em;
+      letter-spacing: -0.045em;
       word-break: break-word;
+      color: var(--result-value);
     }
 
     .result-unit {
-      margin-top: 7px;
+      margin-top: 8px;
       color: var(--muted);
       font-size: 12px;
       line-height: 1.4;
+      letter-spacing: 0.01em;
+      font-weight: 800;
+      text-transform: none;
     }
 
     .result-relation {
-      margin-top: 10px;
+      margin-top: 14px;
       color: var(--muted);
       font-size: 12px;
       line-height: 1.5;
@@ -503,6 +608,171 @@
       font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
     }
 
+    .export-panel {
+      margin-top: 16px;
+      padding: 16px;
+      border-radius: 18px;
+      border: 1px solid var(--border);
+      background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
+    }
+
+    html[data-theme="light"] .export-panel {
+      background: linear-gradient(180deg, rgba(255,255,255,1), rgba(248,250,252,0.98));
+    }
+
+    .export-panel-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .export-panel-title {
+      margin: 0;
+      font-size: 15px;
+      font-weight: 700;
+    }
+
+    .export-panel-caption {
+      margin: 4px 0 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.6;
+    }
+
+    .export-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .select-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 12px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      background: var(--input-bg);
+      min-height: 46px;
+    }
+
+    .select-wrap label {
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .select-wrap select,
+    .select-wrap input {
+      appearance: none;
+      border: 0;
+      outline: none;
+      background: transparent;
+      color: var(--text);
+      font: inherit;
+      font-weight: 700;
+      min-width: 70px;
+    }
+
+    .select-wrap select {
+      cursor: pointer;
+    }
+
+    .select-wrap input[type="number"] {
+      width: 72px;
+      padding: 0;
+    }
+
+    .select-wrap-number {
+      min-width: 138px;
+    }
+
+    .formula-reference-box {
+      margin-bottom: 16px;
+      padding: 16px;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
+    }
+
+    html[data-theme="light"] .formula-reference-box {
+      background: linear-gradient(180deg, rgba(255,255,255,1), rgba(248,250,252,0.98));
+    }
+
+    .formula-reference-title {
+      margin: 0 0 6px;
+      font-size: 16px;
+      font-weight: 700;
+    }
+
+    .formula-reference-caption {
+      margin: 0 0 12px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .formula-reference-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .formula-reference-footnote {
+      margin-top: 12px;
+      padding: 12px 14px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      background: rgba(243, 119, 38, 0.08);
+      color: var(--text);
+      font-size: 12px;
+      line-height: 1.65;
+    }
+
+    .snapshot-stage {
+      position: fixed;
+      left: -99999px;
+      top: 0;
+      pointer-events: none;
+      opacity: 0;
+      z-index: -1;
+    }
+
+    .snapshot-export {
+      display: grid;
+      grid-template-columns: repeat(3, max-content);
+      column-gap: 34px;
+      row-gap: 14px;
+      width: max-content;
+      max-width: none;
+      padding: 20px 24px;
+      align-items: start;
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    .snapshot-export.bg-white {
+      background: #ffffff;
+    }
+
+    .snapshot-export.bg-transparent {
+      background: transparent;
+    }
+
+    .snapshot-equation {
+      margin: 0;
+      padding: 0;
+      line-height: 1.3;
+    }
+
+    .snapshot-equation .katex {
+      font-size: 1.42em;
+      color: #000000;
+    }
+
     @media (max-width: 1080px) {
       .top-grid {
         grid-template-columns: 1fr;
@@ -531,15 +801,23 @@
       }
 
       .input-grid,
-      .results-grid {
+      .results-grid,
+      .formula-reference-grid {
         grid-template-columns: 1fr;
       }
 
-      .button-row {
+      .button-row,
+      .export-actions {
         flex-direction: column;
       }
 
-      button {
+      .export-panel-head {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      button,
+      .select-wrap {
         width: 100%;
       }
     }
@@ -559,7 +837,7 @@
     <header class="topbar">
       <div class="title-wrap">
         <h1>Laser Plasma Calculator</h1>
-        <p>Compute all compatible variables from your known inputs. LaTeX formulas, linked updates, consistency checks, dark mode, and light mode are built in.</p>
+        <p>Solve linked laser parameters.</p>
       </div>
       <div class="toolbar">
         <button class="btn-secondary" id="themeToggle">Light Mode</button>
@@ -611,6 +889,14 @@
               <label for="n_c"><span>\(n_c\) (m\(^{-3}\))</span><span class="hint">Critical density</span></label>
               <input id="n_c" type="text" inputmode="decimal" placeholder="optional" />
             </div>
+            <div class="field">
+              <label for="T_e_eV"><span>\(T_e\) (eV)</span><span class="hint">Electron temperature</span></label>
+              <input id="T_e_eV" type="text" inputmode="decimal" placeholder="e.g. 1000" />
+            </div>
+            <div class="field">
+              <label for="T_e_K"><span>\(T_e\) (K)</span><span class="hint">Electron temperature</span></label>
+              <input id="T_e_K" type="text" inputmode="decimal" placeholder="e.g. 1.16e7" />
+            </div>
           </div>
 
           <div class="button-row">
@@ -619,6 +905,37 @@
             <button class="btn-secondary" id="resetBtn">Reset</button>
             <button class="btn-ghost" id="copyResultsBtn">Copy Results</button>
             <button class="btn-ghost" id="copyShareBtn">Copy Share Link</button>
+          </div>
+
+          <div class="export-panel">
+            <div class="export-panel-head">
+              <div>
+                <h3 class="export-panel-title">Export</h3>
+                <p class="export-panel-caption">Rendered equations only.</p>
+              </div>
+            </div>
+            <div class="export-actions">
+              <div class="select-wrap">
+                <label for="exportFormat">Format</label>
+                <select id="exportFormat">
+                  <option value="png">PNG</option>
+                  <option value="svg">SVG</option>
+                </select>
+              </div>
+              <div class="select-wrap">
+                <label for="exportBackground">Background</label>
+                <select id="exportBackground">
+                  <option value="white">White</option>
+                  <option value="transparent">Transparent</option>
+                </select>
+              </div>
+              <div class="select-wrap select-wrap-number">
+                <label for="exportDecimals">Decimals</label>
+                <input id="exportDecimals" type="number" min="0" max="10" step="1" value="2" />
+              </div>
+              <button class="btn-secondary" id="copyImageBtn">Copy</button>
+              <button class="btn-secondary" id="saveImageBtn">Save</button>
+            </div>
           </div>
 
           <div class="status-wrap" id="statusWrap"></div>
@@ -630,7 +947,7 @@
           <div class="panel-title-row">
             <div>
               <h2 class="panel-title">Final Values</h2>
-              <p class="panel-caption">Each card shows whether a value was entered, derived, or is still missing.</p>
+              <p class="panel-caption">Input · derived · missing.</p>
             </div>
             <div class="pill" id="solvedCountPill">0 solved</div>
           </div>
@@ -644,7 +961,7 @@
         <div class="panel-title-row">
           <div>
             <h2 class="panel-title">Formulas</h2>
-            <p class="panel-caption">You can collapse everything with one click.</p>
+            <p class="panel-caption">Core formulas.</p>
           </div>
           <div class="formula-controls">
             <button class="btn-secondary" id="toggleFormulasBtn">Collapse All</button>
@@ -682,15 +999,41 @@
         </details>
 
         <details class="formula-detail" open>
+          <summary><span>Electron temperature conversion</span><span class="summary-hint">\(T_e\) in eV and K</span></summary>
+          <div class="formula-content">
+            <div class="formula-block">$$T_e\,(\mathrm{eV}) = \frac{k_B}{q_e}\,T_e\,(\mathrm{K}) \approx 8.617333262\times10^{-5}\,T_e\,(\mathrm{K})$$</div>
+            <div class="formula-block">$$T_e\,(\mathrm{K}) = \frac{q_e}{k_B}\,T_e\,(\mathrm{eV}) \approx 1.160451812\times10^4\,T_e\,(\mathrm{eV})$$</div>
+            <div class="formula-block">$$1~\mathrm{eV} = 11604.51812~\mathrm{K},\qquad 1~\mathrm{K} = 8.617333262\times10^{-5}~\mathrm{eV}$$</div>
+          </div>
+        </details>
+
+        <details class="formula-detail" open>
           <summary><span>Constants</span><span class="summary-hint">SI</span></summary>
           <div class="formula-content">
             <div class="formula-block">$$\varepsilon_0 = 8.8541878128\times10^{-12}\;\mathrm{F/m},\quad q_e = 1.602176634\times10^{-19}\;\mathrm{C},\quad m_e = 9.1093837015\times10^{-31}\;\mathrm{kg},\quad c = 2.99792458\times10^8\;\mathrm{m/s}$$</div>
+            <div class="formula-block">$$k_B = 1.380649\times10^{-23}\;\mathrm{J/K},\qquad 1~\mathrm{eV} = q_e\;\mathrm{J}$$</div>
             <div class="formula-block">$$\omega = \frac{2\pi c}{\lambda_{\mathrm{m}}},\qquad \mu_0\varepsilon_0 = \frac{1}{c^2}$$</div>
           </div>
         </details>
+
+        <div class="formula-reference-box">
+          <h3 class="formula-reference-title">Extra plasma formulas</h3>
+          <p class="formula-reference-caption">Reference only.</p>
+          <div class="formula-reference-grid">
+            <div class="formula-block">$$\omega_p = \sqrt{\frac{n_e q_e^2}{\varepsilon_0 m_e}}$$</div>
+            <div class="formula-block">$$\lambda_D = \sqrt{\frac{\varepsilon_0 k_B T_e}{n_e q_e^2}}$$</div>
+            <div class="formula-block">$$\delta = \frac{c}{\omega_p}$$</div>
+            <div class="formula-block">$$T_p^{(\mathrm{LP})} \approx m_e c^2\left(\sqrt{1+\frac{a_0^2}{2}}-1\right)$$</div>
+            <div class="formula-block">$$T_p^{(\mathrm{CP})} \approx m_e c^2\left(\sqrt{1+a_0^2}-1\right)$$</div>
+            <div class="formula-block">$$1~\mathrm{eV} = 11604.51812~\mathrm{K},\qquad 1~\mathrm{K} = 8.617333262\times10^{-5}~\mathrm{eV}$$</div>
+          </div>
+          <div class="formula-reference-footnote">Auto \(T_e\): LP estimate. CP shown only for reference.</div>
+        </div>
       </div>
     </section>
   </div>
+
+  <div id="snapshotStage" class="snapshot-stage" aria-hidden="true"></div>
 
   <script>
     const LN2 = Math.log(2.0);
@@ -699,9 +1042,13 @@
     const me = 9.1093837015e-31;
     const qe = 1.602176634e-19;
     const c = 2.99792458e8;
+    const kB = 1.380649e-23;
+    const EV_TO_K = qe / kB;
+    const K_TO_EV = kB / qe;
+    const ME_C2_EV = me * c * c / qe;
     const GAUSSIAN_FACTOR = 8 * LN2 * Math.sqrt(LN2) / (Math.PI * Math.sqrt(Math.PI));
 
-    const fieldOrder = ["E", "d_fwhm", "w0", "t_fwhm", "I", "lambda_nm", "a0", "n_c"];
+    const fieldOrder = ["E", "d_fwhm", "w0", "t_fwhm", "I", "lambda_nm", "a0", "n_c", "T_e_eV", "T_e_K"];
     const fieldMeta = {
       E: {
         textLabel: 'E',
@@ -759,6 +1106,20 @@
         positive: true,
         relation: '\\(n_c = \\varepsilon_0 m_e (2\\pi c/\\lambda_{\\mathrm{m}})^2 / q_e^2\\)'
       },
+      T_e_eV: {
+        textLabel: 'T_e_eV',
+        mathLabel: '\\(T_e\\)',
+        unit: 'eV',
+        positive: true,
+        relation: '\\(T_e(\\mathrm{K}) = (q_e/k_B)\\,T_e(\\mathrm{eV})\\)'
+      },
+      T_e_K: {
+        textLabel: 'T_e_K',
+        mathLabel: '\\(T_e\\)',
+        unit: 'K',
+        positive: true,
+        relation: '\\(T_e(\\mathrm{eV}) = (k_B/q_e)\\,T_e(\\mathrm{K})\\)'
+      },
     };
 
     const inputs = Object.fromEntries(fieldOrder.map(id => [id, document.getElementById(id)]));
@@ -768,6 +1129,10 @@
     const themeToggle = document.getElementById('themeToggle');
     const formulaDetails = () => Array.from(document.querySelectorAll('.formula-detail'));
     const toggleFormulasBtn = document.getElementById('toggleFormulasBtn');
+    const exportFormat = document.getElementById('exportFormat');
+    const exportBackground = document.getElementById('exportBackground');
+    const exportDecimals = document.getElementById('exportDecimals');
+    const snapshotStage = document.getElementById('snapshotStage');
 
     function parseNumber(text) {
       const raw = String(text ?? '').trim();
@@ -782,6 +1147,13 @@
       const abs = Math.abs(value);
       if (abs >= 1e4 || (abs > 0 && abs < 1e-3)) return value.toExponential(6);
       return Number(value.toPrecision(8)).toString();
+    }
+
+    function formatPercent(value) {
+      if (!Number.isFinite(value)) return 'undefined';
+      if (Math.abs(value) >= 10) return `${value.toFixed(1)}%`;
+      if (Math.abs(value) >= 1) return `${value.toFixed(2)}%`;
+      return `${value.toFixed(3)}%`;
     }
 
     function nearlyEqual(a, b, relTol = 1e-6, absTol = 1e-12) {
@@ -852,7 +1224,9 @@
         I: '',
         lambda_nm: '800',
         a0: '',
-        n_c: ''
+        n_c: '',
+        T_e_eV: '1000',
+        T_e_K: ''
       };
       for (const [key, value] of Object.entries(example)) inputs[key].value = value;
       saveInputsToLocalStorage();
@@ -870,19 +1244,37 @@
         const meta = fieldMeta[key];
         const v = values[key];
         if (Number.isNaN(v)) {
-          errors.push(`Field ${meta.mathLabel} is not a valid number.`);
+          errors.push(`Field ${meta.mathLabel} (${meta.unit}) is not a valid number.`);
           continue;
         }
         if (v == null) continue;
-        if (meta.positive && v <= 0) errors.push(`Field ${meta.mathLabel} must satisfy \\(> 0\\).`);
-        if (meta.nonNegative && v < 0) errors.push(`Field ${meta.mathLabel} must satisfy \\(\\ge 0\\).`);
+        if (meta.positive && v <= 0) errors.push(`Field ${meta.mathLabel} (${meta.unit}) must satisfy \\(> 0\\).`);
+        if (meta.nonNegative && v < 0) errors.push(`Field ${meta.mathLabel} (${meta.unit}) must satisfy \\(\\ge 0\\).`);
       }
       return errors;
+    }
+
+    function conflictMessage({ targetKey, entered, expected, givenKeys, relation, relTol = 1e-5 }) {
+      if (entered == null || !Number.isFinite(expected)) return null;
+      if (nearlyEqual(entered, expected, relTol)) return null;
+
+      const meta = fieldMeta[targetKey];
+      const deltaPct = expected === 0 ? NaN : ((entered - expected) / expected) * 100;
+      const supporting = givenKeys.map(key => fieldMeta[key].mathLabel).join(', ');
+
+      return `
+        <strong>Conflict in ${meta.mathLabel}:</strong>
+        you entered <span class="mono">${formatNumber(entered)}</span> ${meta.unit.replace(/<[^>]+>/g, '')},
+        but from ${supporting} ${relation ? `using ${relation}` : ''} the calculator gives
+        <span class="mono">${formatNumber(expected)}</span> ${meta.unit.replace(/<[^>]+>/g, '')}.
+        Relative deviation: <span class="mono">${formatPercent(deltaPct)}</span>.
+      `;
     }
 
     function computeState(rawValues) {
       const vals = {};
       const origin = {};
+      const relations = {};
       const messages = [];
       const warnings = [];
       const errors = [];
@@ -893,22 +1285,27 @@
       }
 
       errors.push(...validate(vals));
-      if (errors.length) return { vals, origin, messages, warnings, errors };
+      if (errors.length) return { vals, origin, relations, messages, warnings, errors };
 
-      function derive(key, value, htmlMessage) {
+      function derive(key, value, htmlMessage, relationOverride = null) {
         if (!Number.isFinite(value)) return false;
         if (vals[key] == null) {
           vals[key] = value;
           origin[key] = 'derived';
+          if (relationOverride) relations[key] = relationOverride;
           messages.push(htmlMessage);
           return true;
         }
         return false;
       }
 
-      function warnIfInconsistent(key, expected, htmlMessage, relTol = 1e-5) {
-        if (vals[key] == null || !Number.isFinite(expected)) return;
-        if (!nearlyEqual(vals[key], expected, relTol)) warnings.push(htmlMessage);
+      function addConflict(config) {
+        const message = conflictMessage(config);
+        if (message) warnings.push(message);
+      }
+
+      function ponderomotiveTemperatureEv(a0) {
+        return ME_C2_EV * (Math.sqrt(1 + (a0 ** 2) / 2) - 1);
       }
 
       for (let iter = 0; iter < 10; iter++) {
@@ -916,42 +1313,88 @@
 
         if (vals.d_fwhm != null && vals.w0 == null) {
           changed = derive('w0', vals.d_fwhm / Math.sqrt(2 * LN2),
-            'Computed \\(w_0\\) from \\(d_{\\mathrm{fwhm}}\\) using \\(w_0 = d_{\\mathrm{fwhm}}/\\sqrt{2\\ln 2}\\).') || changed;
+            'Computed \\(w_0\\) from \\(d_{\\mathrm{fwhm}}\\) using \\(w_0 = d_{\\mathrm{fwhm}}/\\sqrt{2\\ln 2}\\).',
+            '\\(w_0 = d_{\\mathrm{fwhm}}/\\sqrt{2\\ln 2}\\)') || changed;
         } else if (vals.w0 != null && vals.d_fwhm == null) {
           changed = derive('d_fwhm', vals.w0 * Math.sqrt(2 * LN2),
-            'Computed \\(d_{\\mathrm{fwhm}}\\) from \\(w_0\\) using \\(d_{\\mathrm{fwhm}} = w_0\\sqrt{2\\ln 2}\\).') || changed;
+            'Computed \\(d_{\\mathrm{fwhm}}\\) from \\(w_0\\) using \\(d_{\\mathrm{fwhm}} = w_0\\sqrt{2\\ln 2}\\).',
+            '\\(d_{\\mathrm{fwhm}} = w_0\\sqrt{2\\ln 2}\\)') || changed;
         } else if (vals.d_fwhm != null && vals.w0 != null) {
-          warnIfInconsistent('w0', vals.d_fwhm / Math.sqrt(2 * LN2),
-            `Your typed \\(w_0\\) is inconsistent with \\(d_{\\mathrm{fwhm}}\\). Expected approximately <span class="mono">${formatNumber(vals.d_fwhm / Math.sqrt(2 * LN2))}</span> from \\(w_0 = d_{\\mathrm{fwhm}}/\\sqrt{2\\ln 2}\\).`);
+          addConflict({
+            targetKey: 'w0',
+            entered: vals.w0,
+            expected: vals.d_fwhm / Math.sqrt(2 * LN2),
+            givenKeys: ['d_fwhm'],
+            relation: '\\(w_0 = d_{\\mathrm{fwhm}}/\\sqrt{2\\ln 2}\\)'
+          });
         }
 
         const lambda_um = vals.lambda_nm != null ? vals.lambda_nm * 1e-3 : null;
-        const lambda_m = vals.lambda_nm != null ? vals.lambda_nm * 1e-9 : null;
 
         if (vals.I == null && vals.a0 != null && lambda_um != null) {
           changed = derive('I', (vals.a0 ** 2) / (A0_I_LAMBDA_FACTOR * lambda_um ** 2),
-            'Computed \\(I\\) from \\(a_0\\) and \\(\\lambda\\) using \\(I = a_0^2 / [7.2992\\times10^{-19}\\,\\lambda^2]\\).') || changed;
+            'Computed \\(I\\) from \\(a_0\\) and \\(\\lambda\\) using \\(I = a_0^2 / [7.2992\\times10^{-19}\\,\\lambda^2]\\).',
+            '\\(I = a_0^2 / [7.2992\\times10^{-19}\\,\\lambda^2]\\)') || changed;
         } else if (vals.a0 == null && vals.I != null && lambda_um != null) {
           changed = derive('a0', Math.sqrt(A0_I_LAMBDA_FACTOR * lambda_um ** 2 * vals.I),
-            'Computed \\(a_0\\) from \\(I\\) and \\(\\lambda\\) using \\(a_0 = \\sqrt{7.2992\\times10^{-19}\\,\\lambda^2 I}\\).') || changed;
+            'Computed \\(a_0\\) from \\(I\\) and \\(\\lambda\\) using \\(a_0 = \\sqrt{7.2992\\times10^{-19}\\,\\lambda^2 I}\\).',
+            '\\(a_0 = \\sqrt{7.2992\\times10^{-19}\\,\\lambda^2 I}\\)') || changed;
         } else if (vals.lambda_nm == null && vals.a0 != null && vals.I != null && vals.I > 0) {
           changed = derive('lambda_nm', Math.sqrt((vals.a0 ** 2) / (A0_I_LAMBDA_FACTOR * vals.I)) * 1e3,
-            'Computed \\(\\lambda\\) from \\(a_0\\) and \\(I\\) using \\(\\lambda = \\sqrt{a_0^2/(7.2992\\times10^{-19} I)}\\).') || changed;
+            'Computed \\(\\lambda\\) from \\(a_0\\) and \\(I\\) using \\(\\lambda = \\sqrt{a_0^2/(7.2992\\times10^{-19} I)}\\).',
+            '\\(\\lambda = \\sqrt{a_0^2/(7.2992\\times10^{-19} I)}\\)') || changed;
         } else if (vals.I != null && vals.a0 != null && lambda_um != null) {
-          warnIfInconsistent('a0', Math.sqrt(A0_I_LAMBDA_FACTOR * lambda_um ** 2 * vals.I),
-            `Your typed \\(a_0\\) is inconsistent with \\(I\\) and \\(\\lambda\\). Expected approximately <span class="mono">${formatNumber(Math.sqrt(A0_I_LAMBDA_FACTOR * lambda_um ** 2 * vals.I))}</span>.`);
+          addConflict({
+            targetKey: 'a0',
+            entered: vals.a0,
+            expected: Math.sqrt(A0_I_LAMBDA_FACTOR * lambda_um ** 2 * vals.I),
+            givenKeys: ['I', 'lambda_nm'],
+            relation: '\\(a_0 = \\sqrt{7.2992\\times10^{-19}\\,\\lambda^2 I}\\)'
+          });
         }
 
         const lambda_m_after = vals.lambda_nm != null ? vals.lambda_nm * 1e-9 : null;
         if (vals.n_c == null && lambda_m_after != null) {
           changed = derive('n_c', (epsilon0 * me * (2 * Math.PI * c / lambda_m_after) ** 2) / (qe ** 2),
-            'Computed \\(n_c\\) from \\(\\lambda\\) using the critical-density relation \\(n_c = \\varepsilon_0 m_e (2\\pi c/\\lambda_{\\mathrm{m}})^2 / q_e^2\\).') || changed;
+            'Computed \\(n_c\\) from \\(\\lambda\\) using the critical-density relation \\(n_c = \\varepsilon_0 m_e (2\\pi c/\\lambda_{\\mathrm{m}})^2 / q_e^2\\).',
+            '\\(n_c = \\varepsilon_0 m_e (2\\pi c/\\lambda_{\\mathrm{m}})^2 / q_e^2\\)') || changed;
         } else if (vals.lambda_nm == null && vals.n_c != null && vals.n_c > 0) {
           changed = derive('lambda_nm', 2 * Math.PI * c * Math.sqrt(epsilon0 * me / (qe ** 2 * vals.n_c)) * 1e9,
-            'Computed \\(\\lambda\\) from \\(n_c\\) using \\(\\lambda_{\\mathrm{m}} = 2\\pi c\\sqrt{\\varepsilon_0 m_e/(q_e^2 n_c)}\\).') || changed;
+            'Computed \\(\\lambda\\) from \\(n_c\\) using \\(\\lambda_{\\mathrm{m}} = 2\\pi c\\sqrt{\\varepsilon_0 m_e/(q_e^2 n_c)}\\).',
+            '\\(\\lambda_{\\mathrm{m}} = 2\\pi c\\sqrt{\\varepsilon_0 m_e/(q_e^2 n_c)}\\)') || changed;
         } else if (vals.n_c != null && lambda_m_after != null) {
-          warnIfInconsistent('n_c', (epsilon0 * me * (2 * Math.PI * c / lambda_m_after) ** 2) / (qe ** 2),
-            `Your typed \\(n_c\\) is inconsistent with \\(\\lambda\\). Expected approximately <span class="mono">${formatNumber((epsilon0 * me * (2 * Math.PI * c / lambda_m_after) ** 2) / (qe ** 2))}</span>.`);
+          addConflict({
+            targetKey: 'n_c',
+            entered: vals.n_c,
+            expected: (epsilon0 * me * (2 * Math.PI * c / lambda_m_after) ** 2) / (qe ** 2),
+            givenKeys: ['lambda_nm'],
+            relation: '\\(n_c = \\varepsilon_0 m_e (2\\pi c/\\lambda_{\\mathrm{m}})^2 / q_e^2\\)'
+          });
+        }
+
+        if (vals.T_e_eV == null && vals.T_e_K != null) {
+          changed = derive('T_e_eV', vals.T_e_K * K_TO_EV,
+            'Computed \\(T_e\\) in eV from \\(T_e\\) in K using \\(T_e(\\mathrm{eV}) = (k_B/q_e)\\,T_e(\\mathrm{K})\\).',
+            '\\(T_e(\\mathrm{eV}) = (k_B/q_e)\\,T_e(\\mathrm{K})\\)') || changed;
+        } else if (vals.T_e_K == null && vals.T_e_eV != null) {
+          changed = derive('T_e_K', vals.T_e_eV * EV_TO_K,
+            'Computed \\(T_e\\) in K from \\(T_e\\) in eV using \\(T_e(\\mathrm{K}) = (q_e/k_B)\\,T_e(\\mathrm{eV})\\).',
+            '\\(T_e(\\mathrm{K}) = (q_e/k_B)\\,T_e(\\mathrm{eV})\\)') || changed;
+        } else if (vals.T_e_eV != null && vals.T_e_K != null) {
+          addConflict({
+            targetKey: 'T_e_K',
+            entered: vals.T_e_K,
+            expected: vals.T_e_eV * EV_TO_K,
+            givenKeys: ['T_e_eV'],
+            relation: '\\(T_e(\\mathrm{K}) = (q_e/k_B)\\,T_e(\\mathrm{eV})\\)'
+          });
+        }
+
+        if (vals.T_e_eV == null && vals.T_e_K == null && vals.a0 != null) {
+          const tpEv = ponderomotiveTemperatureEv(vals.a0);
+          changed = derive('T_e_eV', tpEv,
+            'Computed \\(T_e\\) from \\(a_0\\) using the ponderomotive-temperature estimate \\(T_p^{(\\mathrm{LP})} \\approx m_e c^2(\\sqrt{1+a_0^2/2}-1)\\).',
+            '\\(T_p^{(\\mathrm{LP})} \\approx m_e c^2(\\sqrt{1+a_0^2/2}-1)\\)') || changed;
         }
 
         if (vals.d_fwhm != null) {
@@ -964,29 +1407,37 @@
             }
             if (vals.I == null && vals.E != null && vals.t_fwhm != null) {
               changed = derive('I', vals.E * GAUSSIAN_FACTOR / (vals.t_fwhm * (d_cm ** 2) * 1e-15),
-                'Computed \\(I\\) from \\(E\\), \\(d_{\\mathrm{fwhm}}\\), and \\(t_{\\mathrm{fwhm}}\\).') || changed;
+                'Computed \\(I\\) from \\(E\\), \\(d_{\\mathrm{fwhm}}\\), and \\(t_{\\mathrm{fwhm}}\\).',
+                '\\(I = E\\times0.82909 / [t_{\\mathrm{fwhm}}(d_{\\mathrm{fwhm}}10^{-4})^2 10^{-15}]\\)') || changed;
             }
             if (vals.t_fwhm == null && vals.E != null && vals.I != null) {
               changed = derive('t_fwhm', vals.E * GAUSSIAN_FACTOR / (vals.I * (d_cm ** 2) * 1e-15),
-                'Computed \\(t_{\\mathrm{fwhm}}\\) from \\(E\\), \\(d_{\\mathrm{fwhm}}\\), and \\(I\\).') || changed;
+                'Computed \\(t_{\\mathrm{fwhm}}\\) from \\(E\\), \\(d_{\\mathrm{fwhm}}\\), and \\(I\\).',
+                '\\(t_{\\mathrm{fwhm}} = E\\times0.82909 / [I(d_{\\mathrm{fwhm}}10^{-4})^2 10^{-15}]\\)') || changed;
             }
           }
           if (vals.E != null && vals.I != null && vals.t_fwhm != null) {
             const expectedE = (vals.I / GAUSSIAN_FACTOR) * vals.t_fwhm * (d_cm ** 2) * 1e-15;
-            warnIfInconsistent('E', expectedE,
-              `Your typed \\(E\\) is inconsistent with \\(I\\), \\(d_{\\mathrm{fwhm}}\\), and \\(t_{\\mathrm{fwhm}}\\). Expected approximately <span class="mono">${formatNumber(expectedE)}</span>.`);
+            addConflict({
+              targetKey: 'E',
+              entered: vals.E,
+              expected: expectedE,
+              givenKeys: ['I', 'd_fwhm', 't_fwhm'],
+              relation: '\\(E = I\\,t_{\\mathrm{fwhm}}(d_{\\mathrm{fwhm}}10^{-4})^2 / 0.82909\\)'
+            });
           }
         }
 
         if (!changed) break;
       }
 
-      return { vals, origin, messages, warnings, errors };
+      return { vals, origin, relations, messages, warnings, errors };
     }
 
     function renderStatus(kind, title, items) {
       if (!items.length) return '';
-      return `<div class="status-box ${kind}"><h3>${title}</h3><ul>${items.map(item => `<li>${item}</li>`).join('')}</ul></div>`;
+      const icon = kind === 'conflict' ? '⚠️' : kind === 'error' ? '⛔' : kind === 'success' ? '✓' : '•';
+      return `<div class="status-box ${kind}"><h3><span>${icon}</span><span>${title}</span></h3><ul>${items.map(item => `<li>${item}</li>`).join('')}</ul></div>`;
     }
 
     function renderResults(state) {
@@ -995,9 +1446,9 @@
         const value = state.vals[key];
         const cardState = value == null ? 'missing' : state.origin[key];
         const tagText = cardState === 'input' ? 'Input' : cardState === 'derived' ? 'Derived' : 'Missing';
-        const relation = cardState === 'derived' ? meta.relation : '';
+        const relation = cardState === 'derived' ? (state.relations[key] || meta.relation) : '';
         return `
-          <article class="result-card">
+          <article class="result-card state-${cardState}">
             <div class="result-head">
               <div class="result-label">${meta.mathLabel}</div>
               <div class="tag ${cardState}">${tagText}</div>
@@ -1035,7 +1486,7 @@
       statusWrap.innerHTML = [
         renderStatus('error', 'Input errors', state.errors),
         renderStatus('success', 'Derived updates', state.messages),
-        renderStatus('warning', 'Consistency warnings', state.warnings),
+        renderStatus('conflict', 'Conflicting inputs detected', state.warnings),
       ].join('');
       renderResults(state);
       queueMathRender();
@@ -1064,6 +1515,153 @@
       saveInputsToLocalStorage();
       updateURLSilently();
       copyText(location.href, button);
+    }
+
+    function trimTrailingZeros(text) {
+      return text.replace(/\.0+$/, '').replace(/(\.\d*?)0+$/, '$1');
+    }
+
+    function getExportDecimals() {
+      const parsed = Number(exportDecimals?.value ?? 2);
+      if (!Number.isFinite(parsed)) return 2;
+      return Math.min(10, Math.max(0, Math.round(parsed)));
+    }
+
+    function formatNumberForLatex(value, decimals = 2) {
+      if (value == null || !Number.isFinite(value)) return null;
+      const abs = Math.abs(value);
+      if (abs !== 0 && (abs >= 1e4 || abs < 1e-3)) {
+        const exp = value.toExponential(decimals);
+        const [mantissa, exponent] = exp.split('e');
+        return `${trimTrailingZeros(mantissa)} \\times 10^{${Number(exponent)}}`;
+      }
+      return trimTrailingZeros(value.toFixed(decimals));
+    }
+
+    function buildParameterTex(state, decimals = 2) {
+      const fields = [
+        ['E', 'E', '\\mathrm{J}'],
+        ['I', 'I', '\\mathrm{W}/\\mathrm{cm}^{2}'],
+        ['w0', 'w_0', '\\mu\\mathrm{m}'],
+        ['a0', 'a_0', ''],
+        ['lambda_nm', '\\lambda', '\\mathrm{nm}'],
+        ['t_fwhm', 't_{\\mathrm{fwhm}}', '\\mathrm{fs}'],
+      ];
+
+      return fields
+        .filter(([key]) => state.vals[key] != null && Number.isFinite(state.vals[key]))
+        .map(([key, symbol, unit]) => {
+          const formatted = formatNumberForLatex(state.vals[key], decimals);
+          const tex = unit ? `${symbol} = ${formatted}\\,${unit}` : `${symbol} = ${formatted}`;
+          return { key, symbol, tex };
+        });
+    }
+
+    function renderSnapshotCard(state) {
+      snapshotStage.innerHTML = '';
+      const wrapper = document.createElement('div');
+      const bgMode = exportBackground?.value === 'transparent' ? 'bg-transparent' : 'bg-white';
+      wrapper.className = `snapshot-export ${bgMode}`;
+      const parameterBlocks = buildParameterTex(state, getExportDecimals()).map(({ tex }) => `
+        <div class="snapshot-equation">
+          ${window.katex ? window.katex.renderToString(tex, { throwOnError: false, displayMode: false }) : tex}
+        </div>
+      `).join('');
+
+      wrapper.innerHTML = parameterBlocks;
+      snapshotStage.appendChild(wrapper);
+      return wrapper;
+    }
+
+    function downloadBlob(blob, filename) {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+
+    async function dataUrlToBlob(dataUrl) {
+      const response = await fetch(dataUrl);
+      return response.blob();
+    }
+
+    async function copyBlobToClipboard(blob) {
+      await navigator.clipboard.write([new ClipboardItem({ [blob.type]: blob })]);
+    }
+
+    function setButtonFeedback(button, label) {
+      const original = button.dataset.originalLabel || button.textContent;
+      button.dataset.originalLabel = original;
+      button.textContent = label;
+      setTimeout(() => {
+        button.textContent = original;
+      }, 1400);
+    }
+
+    async function exportParameterImage(action, button) {
+      const state = computeAndRender();
+      if (state.errors.length) return;
+      if (!window.htmlToImage) {
+        alert('The image export library is not loaded yet. Please try again in a moment.');
+        return;
+      }
+      if (!window.katex) {
+        alert('KaTeX is not ready yet. Please try again in a moment.');
+        return;
+      }
+
+      const node = renderSnapshotCard(state);
+      if (document.fonts?.ready) await document.fonts.ready;
+
+      const filenameBase = 'laser-parameters';
+      const format = exportFormat.value;
+      const backgroundMode = exportBackground?.value === 'transparent' ? 'transparent' : 'white';
+      const options = {
+        cacheBust: true,
+        pixelRatio: 2,
+        backgroundColor: backgroundMode === 'white' ? '#ffffff' : undefined
+      };
+
+      try {
+        if (format === 'png') {
+          const blob = await window.htmlToImage.toBlob(node, options);
+          if (!blob) throw new Error('PNG export failed.');
+          if (action === 'copy') {
+            await copyBlobToClipboard(blob);
+            setButtonFeedback(button, 'Copied');
+          } else {
+            downloadBlob(blob, `${filenameBase}.png`);
+            setButtonFeedback(button, 'Saved');
+          }
+          return;
+        }
+
+        const svgDataUrl = await window.htmlToImage.toSvg(node, options);
+        const svgBlob = await dataUrlToBlob(svgDataUrl);
+
+        if (action === 'save') {
+          downloadBlob(svgBlob, `${filenameBase}.svg`);
+          setButtonFeedback(button, 'Saved');
+          return;
+        }
+
+        try {
+          await copyBlobToClipboard(svgBlob);
+          setButtonFeedback(button, 'Copied');
+        } catch {
+          const fallbackBlob = await window.htmlToImage.toBlob(node, options);
+          if (!fallbackBlob) throw new Error('Clipboard copy failed.');
+          await copyBlobToClipboard(fallbackBlob);
+          setButtonFeedback(button, 'Copied');
+        }
+      } catch (error) {
+        console.error(error);
+        alert('Image export failed in this browser context. Please try Save instead.');
+      }
     }
 
     function applyTheme(theme) {
@@ -1109,6 +1707,8 @@
     bindButton('resetBtn', resetAll);
     bindButton('copyResultsBtn', e => copyResults(e.currentTarget));
     bindButton('copyShareBtn', e => copyShareLink(e.currentTarget));
+    bindButton('copyImageBtn', e => exportParameterImage('copy', e.currentTarget));
+    bindButton('saveImageBtn', e => exportParameterImage('save', e.currentTarget));
     bindButton('themeToggle', () => applyTheme(document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'));
     bindButton('toggleFormulasBtn', toggleAllFormulas);
 
