@@ -1,0 +1,1128 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Laser plasma calculator for pulse energy, focal spot, pulse duration, intensity, a0, wavelength, and critical density." />
+  <title>Laser Plasma Calculator</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.42/dist/katex.min.css" crossorigin="anonymous">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.42/dist/katex.min.js" crossorigin="anonymous"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.42/dist/contrib/auto-render.min.js" crossorigin="anonymous"></script>
+
+  <style>
+    :root {
+      --bg-1: #0b1220;
+      --bg-2: #0f1728;
+      --panel: rgba(14, 22, 37, 0.9);
+      --panel-strong: rgba(17, 28, 46, 0.96);
+      --border: rgba(148, 163, 184, 0.14);
+      --text: #eef3fb;
+      --muted: #94a3b8;
+      --soft: rgba(255, 255, 255, 0.04);
+      --soft-2: rgba(255, 255, 255, 0.06);
+      --input-bg: rgba(7, 12, 21, 0.68);
+      --accent: #f37726;
+      --accent-strong: #df6518;
+      --accent-soft: rgba(243, 119, 38, 0.16);
+      --shadow: 0 22px 50px rgba(2, 6, 23, 0.34);
+      --success: #17a589;
+      --success-soft: rgba(23, 165, 137, 0.12);
+      --warning: #d97706;
+      --warning-soft: rgba(217, 119, 6, 0.12);
+      --danger: #dc2626;
+      --danger-soft: rgba(220, 38, 38, 0.12);
+      --input-tag: rgba(243, 119, 38, 0.16);
+      --input-tag-text: #ffd7bc;
+      --derived-tag: rgba(23, 165, 137, 0.16);
+      --derived-tag-text: #d5fff2;
+      --missing-tag: rgba(148, 163, 184, 0.16);
+      --missing-tag-text: #d8e0ec;
+      --radius-xl: 26px;
+      --radius-lg: 20px;
+      --radius-md: 14px;
+    }
+
+    html[data-theme="light"] {
+      --bg-1: #f5f7fb;
+      --bg-2: #edf1f7;
+      --panel: rgba(255, 255, 255, 0.92);
+      --panel-strong: rgba(255, 255, 255, 0.98);
+      --border: rgba(31, 41, 55, 0.1);
+      --text: #1f2328;
+      --muted: #5c6676;
+      --soft: rgba(31, 41, 55, 0.035);
+      --soft-2: rgba(31, 41, 55, 0.05);
+      --input-bg: #ffffff;
+      --accent: #f37726;
+      --accent-strong: #de6a1f;
+      --accent-soft: rgba(243, 119, 38, 0.12);
+      --shadow: 0 18px 38px rgba(15, 23, 42, 0.08);
+      --success: #0f8f77;
+      --success-soft: rgba(15, 143, 119, 0.1);
+      --warning: #c46b08;
+      --warning-soft: rgba(196, 107, 8, 0.1);
+      --danger: #c92b2b;
+      --danger-soft: rgba(201, 43, 43, 0.1);
+      --input-tag: rgba(243, 119, 38, 0.14);
+      --input-tag-text: #8c4616;
+      --derived-tag: rgba(15, 143, 119, 0.12);
+      --derived-tag-text: #0e6d5b;
+      --missing-tag: rgba(107, 114, 128, 0.12);
+      --missing-tag-text: #5f6877;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 14% 16%, rgba(243, 119, 38, 0.10), transparent 22%),
+        radial-gradient(circle at 86% 10%, rgba(59, 130, 246, 0.08), transparent 20%),
+        linear-gradient(180deg, var(--bg-1), var(--bg-2));
+    }
+
+    html[data-theme="light"] body {
+      background:
+        radial-gradient(circle at 14% 16%, rgba(243, 119, 38, 0.08), transparent 20%),
+        radial-gradient(circle at 86% 10%, rgba(59, 130, 246, 0.05), transparent 18%),
+        linear-gradient(180deg, var(--bg-1), var(--bg-2));
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.024) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.024) 1px, transparent 1px);
+      background-size: 54px 54px;
+      mask-image: radial-gradient(circle at center, black 44%, transparent 84%);
+      opacity: 0.22;
+    }
+
+    html[data-theme="light"] body::before {
+      background-image:
+        linear-gradient(rgba(15,23,42,0.028) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(15,23,42,0.028) 1px, transparent 1px);
+      opacity: 0.3;
+    }
+
+    .container {
+      width: min(1380px, calc(100% - 28px));
+      margin: 20px auto 42px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+
+    .title-wrap h1 {
+      margin: 0;
+      font-size: clamp(30px, 3vw, 42px);
+      line-height: 1.02;
+      letter-spacing: -0.04em;
+    }
+
+    .title-wrap p {
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.65;
+      max-width: 65ch;
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow);
+    }
+
+    .top-grid {
+      display: grid;
+      grid-template-columns: minmax(520px, 1.18fr) minmax(420px, 0.95fr);
+      gap: 18px;
+      align-items: start;
+      margin-bottom: 18px;
+    }
+
+    .panel-inner {
+      padding: 22px;
+    }
+
+    .panel-title-row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .panel-title {
+      margin: 0;
+      font-size: 24px;
+      letter-spacing: -0.02em;
+    }
+
+    .panel-caption {
+      margin: 6px 0 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 34px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: var(--soft);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .input-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .field {
+      background: var(--soft);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 14px;
+    }
+
+    .field label {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 10px;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .field .hint {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .field input {
+      width: 100%;
+      border: 1px solid transparent;
+      border-radius: 14px;
+      padding: 13px 14px;
+      background: var(--input-bg);
+      color: var(--text);
+      font: inherit;
+      font-size: 15px;
+      outline: none;
+      transition: border-color 160ms ease, box-shadow 160ms ease;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.04);
+    }
+
+    .field input::placeholder { color: #78879f; }
+
+    .field input:focus {
+      border-color: rgba(243, 119, 38, 0.65);
+      box-shadow: 0 0 0 4px rgba(243, 119, 38, 0.12);
+    }
+
+    .button-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    button {
+      appearance: none;
+      border: 0;
+      outline: none;
+      cursor: pointer;
+      border-radius: 14px;
+      padding: 13px 16px;
+      font: inherit;
+      font-weight: 700;
+      transition: transform 160ms ease, box-shadow 160ms ease, opacity 160ms ease, background 160ms ease;
+    }
+
+    button:hover { transform: translateY(-1px); }
+    button:active { transform: translateY(0); }
+
+    .btn-primary {
+      color: #fff8f1;
+      background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+      box-shadow: 0 14px 32px rgba(243, 119, 38, 0.24);
+    }
+
+    .btn-primary:hover {
+      box-shadow: 0 18px 36px rgba(243, 119, 38, 0.28);
+    }
+
+    .btn-secondary {
+      color: var(--text);
+      background: var(--soft-2);
+      border: 1px solid var(--border);
+    }
+
+    .btn-ghost {
+      color: var(--muted);
+      background: transparent;
+      border: 1px dashed var(--border);
+    }
+
+    .status-wrap {
+      display: grid;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .status-box {
+      border-radius: 18px;
+      padding: 14px 16px;
+      border: 1px solid var(--border);
+      background: var(--soft);
+    }
+
+    .status-box.success {
+      border-color: rgba(23, 165, 137, 0.3);
+      background: var(--success-soft);
+    }
+
+    .status-box.warning {
+      border-color: rgba(217, 119, 6, 0.26);
+      background: var(--warning-soft);
+    }
+
+    .status-box.error {
+      border-color: rgba(220, 38, 38, 0.26);
+      background: var(--danger-soft);
+    }
+
+    .status-box h3 {
+      margin: 0 0 8px;
+      font-size: 14px;
+      letter-spacing: 0;
+    }
+
+    .status-box ul {
+      margin: 0;
+      padding-left: 18px;
+      line-height: 1.7;
+      font-size: 14px;
+    }
+
+    .status-box li + li { margin-top: 6px; }
+
+    .results-panel {
+      position: sticky;
+      top: 18px;
+      background: var(--panel-strong);
+    }
+
+    .results-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+      margin-top: 16px;
+    }
+
+    .result-card {
+      position: relative;
+      overflow: hidden;
+      min-height: 128px;
+      border-radius: 20px;
+      padding: 16px;
+      border: 1px solid var(--border);
+      background: linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02));
+    }
+
+    html[data-theme="light"] .result-card {
+      background: linear-gradient(180deg, rgba(255,255,255,1), rgba(248,250,252,0.98));
+    }
+
+    .result-card::after {
+      content: "";
+      position: absolute;
+      right: -16px;
+      bottom: -24px;
+      width: 96px;
+      height: 96px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(243, 119, 38, 0.14), transparent 66%);
+      pointer-events: none;
+    }
+
+    .result-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .result-label {
+      font-size: 15px;
+      font-weight: 700;
+      min-height: 22px;
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .tag.input { background: var(--input-tag); color: var(--input-tag-text); }
+    .tag.derived { background: var(--derived-tag); color: var(--derived-tag-text); }
+    .tag.missing { background: var(--missing-tag); color: var(--missing-tag-text); }
+
+    .result-value {
+      font-size: 20px;
+      line-height: 1.25;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      word-break: break-word;
+    }
+
+    .result-unit {
+      margin-top: 7px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.4;
+    }
+
+    .result-relation {
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.5;
+      min-height: 18px;
+    }
+
+    .formula-panel .panel-title-row {
+      margin-bottom: 14px;
+    }
+
+    .formula-controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    details {
+      border-radius: 18px;
+      background: var(--soft);
+      border: 1px solid var(--border);
+      padding: 0 16px;
+    }
+
+    details + details { margin-top: 12px; }
+
+    summary {
+      list-style: none;
+      cursor: pointer;
+      padding: 16px 2px;
+      font-size: 15px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    summary::-webkit-details-marker { display: none; }
+
+    .summary-hint {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .formula-content {
+      padding-bottom: 16px;
+    }
+
+    .formula-block {
+      margin-bottom: 10px;
+      padding: 14px 16px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.03);
+      overflow-x: auto;
+    }
+
+    html[data-theme="light"] .formula-block {
+      background: rgba(15, 23, 42, 0.02);
+    }
+
+    .formula-block:last-child { margin-bottom: 0; }
+
+    .hidden { display: none !important; }
+
+    .mono {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+
+    @media (max-width: 1080px) {
+      .top-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .results-panel {
+        position: static;
+      }
+    }
+
+    @media (max-width: 760px) {
+      .container {
+        width: min(100% - 18px, 1380px);
+        margin-top: 14px;
+      }
+
+      .topbar,
+      .panel-title-row {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .toolbar,
+      .formula-controls {
+        justify-content: flex-start;
+      }
+
+      .input-grid,
+      .results-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .button-row {
+        flex-direction: column;
+      }
+
+      button {
+        width: 100%;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        scroll-behavior: auto !important;
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header class="topbar">
+      <div class="title-wrap">
+        <h1>Laser Plasma Calculator</h1>
+        <p>Compute all compatible variables from your known inputs. LaTeX formulas, linked updates, consistency checks, dark mode, and light mode are built in.</p>
+      </div>
+      <div class="toolbar">
+        <button class="btn-secondary" id="themeToggle">Light Mode</button>
+        <button class="btn-primary" id="computeBtnTop">Compute / Update</button>
+      </div>
+    </header>
+
+    <section class="top-grid">
+      <div class="panel">
+        <div class="panel-inner">
+          <div class="panel-title-row">
+            <div>
+              <h2 class="panel-title">Calculator</h2>
+              <p class="panel-caption">Fill the values you know, then compute the rest.</p>
+            </div>
+            <div class="pill">Static · Client-side only</div>
+          </div>
+
+          <div class="input-grid">
+            <div class="field">
+              <label for="E"><span>\(E\) (J)</span><span class="hint">Pulse energy</span></label>
+              <input id="E" type="text" inputmode="decimal" placeholder="e.g. 1.5" />
+            </div>
+            <div class="field">
+              <label for="t_fwhm"><span>\(t_{\mathrm{fwhm}}\) (fs)</span><span class="hint">Pulse duration</span></label>
+              <input id="t_fwhm" type="text" inputmode="decimal" placeholder="e.g. 30" />
+            </div>
+            <div class="field">
+              <label for="d_fwhm"><span>\(d_{\mathrm{fwhm}}\) (\mu\mathrm{m})</span><span class="hint">FWHM diameter</span></label>
+              <input id="d_fwhm" type="text" inputmode="decimal" placeholder="e.g. 5" />
+            </div>
+            <div class="field">
+              <label for="w0"><span>\(w_0\) (\mu\mathrm{m})</span><span class="hint">Gaussian waist</span></label>
+              <input id="w0" type="text" inputmode="decimal" placeholder="optional if d_fwhm is given" />
+            </div>
+            <div class="field">
+              <label for="I"><span>\(I\) (W/cm\(^2\))</span><span class="hint">Peak intensity</span></label>
+              <input id="I" type="text" inputmode="decimal" placeholder="e.g. 1e20" />
+            </div>
+            <div class="field">
+              <label for="lambda_nm"><span>\(\lambda\) (nm)</span><span class="hint">Laser wavelength</span></label>
+              <input id="lambda_nm" type="text" inputmode="decimal" value="800" placeholder="default 800" />
+            </div>
+            <div class="field">
+              <label for="a0"><span>\(a_0\)</span><span class="hint">Normalized vector potential</span></label>
+              <input id="a0" type="text" inputmode="decimal" placeholder="optional" />
+            </div>
+            <div class="field">
+              <label for="n_c"><span>\(n_c\) (m\(^{-3}\))</span><span class="hint">Critical density</span></label>
+              <input id="n_c" type="text" inputmode="decimal" placeholder="optional" />
+            </div>
+          </div>
+
+          <div class="button-row">
+            <button class="btn-primary" id="computeBtn">Compute Missing Variables</button>
+            <button class="btn-secondary" id="exampleBtn">Load Example</button>
+            <button class="btn-secondary" id="resetBtn">Reset</button>
+            <button class="btn-ghost" id="copyResultsBtn">Copy Results</button>
+            <button class="btn-ghost" id="copyShareBtn">Copy Share Link</button>
+          </div>
+
+          <div class="status-wrap" id="statusWrap"></div>
+        </div>
+      </div>
+
+      <div class="panel results-panel">
+        <div class="panel-inner">
+          <div class="panel-title-row">
+            <div>
+              <h2 class="panel-title">Final Values</h2>
+              <p class="panel-caption">Each card shows whether a value was entered, derived, or is still missing.</p>
+            </div>
+            <div class="pill" id="solvedCountPill">0 solved</div>
+          </div>
+          <div class="results-grid" id="resultsGrid"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel formula-panel">
+      <div class="panel-inner">
+        <div class="panel-title-row">
+          <div>
+            <h2 class="panel-title">Formulas</h2>
+            <p class="panel-caption">You can collapse everything with one click.</p>
+          </div>
+          <div class="formula-controls">
+            <button class="btn-secondary" id="toggleFormulasBtn">Collapse All</button>
+          </div>
+        </div>
+
+        <details class="formula-detail" open>
+          <summary><span>Gaussian pulse and focal spot</span><span class="summary-hint">\(E, I, d_{\mathrm{fwhm}}, t_{\mathrm{fwhm}}, w_0\)</span></summary>
+          <div class="formula-content">
+            <div class="formula-block">$$\frac{8\ln(2)\,\sqrt{\ln(2)}}{\pi\sqrt{\pi}} = 0.82909\ldots$$</div>
+            <div class="formula-block">$$E\,(\mathrm{J}) = \frac{I\,(\mathrm{W/cm}^2)}{0.82909}\; t_{\mathrm{fwhm}}\,(\mathrm{fs})\; \Bigl[d_{\mathrm{fwhm}}\,(\mu\mathrm{m})\times10^{-4}\Bigr]^2\times10^{-15}$$</div>
+            <div class="formula-block">$$I\,(\mathrm{W/cm}^2) = E\,(\mathrm{J})\times0.82909\Big/\Bigl[t_{\mathrm{fwhm}}\,(\mathrm{fs})\;\bigl(d_{\mathrm{fwhm}}\,(\mu\mathrm{m})\times10^{-4}\bigr)^2\times10^{-15}\Bigr]$$</div>
+            <div class="formula-block">$$t_{\mathrm{fwhm}}\,(\mathrm{fs}) = E\,(\mathrm{J})\times0.82909\Big/\Bigl[I\,(\mathrm{W/cm}^2)\;\bigl(d_{\mathrm{fwhm}}\,(\mu\mathrm{m})\times10^{-4}\bigr)^2\times10^{-15}\Bigr]$$</div>
+            <div class="formula-block">$$d_{\mathrm{fwhm}}\,(\mu\mathrm{m}) = \sqrt{\frac{E\,(\mathrm{J})\times0.82909}{I\,(\mathrm{W/cm}^2)\;t_{\mathrm{fwhm}}\,(\mathrm{fs})\times10^{-15}}}\times10^4$$</div>
+            <div class="formula-block">$$w_0\,(\mu\mathrm{m}) = \frac{d_{\mathrm{fwhm}}\,(\mu\mathrm{m})}{\sqrt{2\ln2}},\qquad d_{\mathrm{fwhm}}\,(\mu\mathrm{m}) = w_0\,(\mu\mathrm{m})\sqrt{2\ln2}$$</div>
+          </div>
+        </details>
+
+        <details class="formula-detail" open>
+          <summary><span>\(a_0\), intensity, and wavelength</span><span class="summary-hint">\(I, a_0, \lambda\)</span></summary>
+          <div class="formula-content">
+            <div class="formula-block">$$a_0^2 \simeq 7.2992\times10^{-19}\,[\lambda\,(\mu\mathrm{m})]^2\,I\,(\mathrm{W/cm}^2)$$</div>
+            <div class="formula-block">$$a_0 = \frac{eE_0}{m_e\omega c} = \frac{e}{m_e c\omega}\sqrt{\frac{2I}{\varepsilon_0 c}}$$</div>
+            <div class="formula-block">$$I = \frac{a_0^2}{7.2992\times10^{-19}[\lambda\,(\mu\mathrm{m})]^2},\qquad a_0 = \sqrt{7.2992\times10^{-19}[\lambda\,(\mu\mathrm{m})]^2 I}$$</div>
+            <div class="formula-block">$$\lambda\,(\mu\mathrm{m}) = \sqrt{\frac{a_0^2}{7.2992\times10^{-19} I}}$$</div>
+          </div>
+        </details>
+
+        <details class="formula-detail" open>
+          <summary><span>Critical density</span><span class="summary-hint">\(n_c, \lambda\)</span></summary>
+          <div class="formula-content">
+            <div class="formula-block">$$n_c\,(\mathrm{m}^{-3}) = \frac{\varepsilon_0 m_e}{q_e^2}\Bigl(\frac{2\pi c}{\lambda_{\mathrm{m}}}\Bigr)^2 = \frac{\varepsilon_0 m_e (2\pi c)^2}{q_e^2\lambda_{\mathrm{m}}^2}$$</div>
+            <div class="formula-block">$$\lambda_{\mathrm{m}} = 2\pi c\sqrt{\frac{\varepsilon_0 m_e}{q_e^2 n_c}}$$</div>
+          </div>
+        </details>
+
+        <details class="formula-detail" open>
+          <summary><span>Constants</span><span class="summary-hint">SI</span></summary>
+          <div class="formula-content">
+            <div class="formula-block">$$\varepsilon_0 = 8.8541878128\times10^{-12}\;\mathrm{F/m},\quad q_e = 1.602176634\times10^{-19}\;\mathrm{C},\quad m_e = 9.1093837015\times10^{-31}\;\mathrm{kg},\quad c = 2.99792458\times10^8\;\mathrm{m/s}$$</div>
+            <div class="formula-block">$$\omega = \frac{2\pi c}{\lambda_{\mathrm{m}}},\qquad \mu_0\varepsilon_0 = \frac{1}{c^2}$$</div>
+          </div>
+        </details>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const LN2 = Math.log(2.0);
+    const A0_I_LAMBDA_FACTOR = 7.2992e-19;
+    const epsilon0 = 8.8541878128e-12;
+    const me = 9.1093837015e-31;
+    const qe = 1.602176634e-19;
+    const c = 2.99792458e8;
+    const GAUSSIAN_FACTOR = 8 * LN2 * Math.sqrt(LN2) / (Math.PI * Math.sqrt(Math.PI));
+
+    const fieldOrder = ["E", "d_fwhm", "w0", "t_fwhm", "I", "lambda_nm", "a0", "n_c"];
+    const fieldMeta = {
+      E: {
+        textLabel: 'E',
+        mathLabel: '\\(E\\)',
+        unit: 'J',
+        positive: true,
+        relation: ''
+      },
+      d_fwhm: {
+        textLabel: 'd_fwhm',
+        mathLabel: '\\(d_{\\mathrm{fwhm}}\\)',
+        unit: 'μm',
+        positive: true,
+        relation: '\\(d_{\\mathrm{fwhm}} = w_0\\sqrt{2\\ln 2}\\)'
+      },
+      w0: {
+        textLabel: 'w0',
+        mathLabel: '\\(w_0\\)',
+        unit: 'μm',
+        positive: true,
+        relation: '\\(w_0 = d_{\\mathrm{fwhm}}/\\sqrt{2\\ln 2}\\)'
+      },
+      t_fwhm: {
+        textLabel: 't_fwhm',
+        mathLabel: '\\(t_{\\mathrm{fwhm}}\\)',
+        unit: 'fs',
+        positive: true,
+        relation: '\\(t_{\\mathrm{fwhm}} = E\\,0.82909 / [I(d_{\\mathrm{fwhm}}10^{-4})^2 10^{-15}]\\)'
+      },
+      I: {
+        textLabel: 'I',
+        mathLabel: '\\(I\\)',
+        unit: 'W/cm²',
+        positive: true,
+        relation: '\\(I = a_0^2 / [7.2992\\times10^{-19}\\,\\lambda^2]\\)'
+      },
+      lambda_nm: {
+        textLabel: 'lambda',
+        mathLabel: '\\(\\lambda\\)',
+        unit: 'nm',
+        positive: true,
+        relation: '\\(\\lambda_{\\mathrm{m}} = 2\\pi c\\sqrt{\\varepsilon_0 m_e/(q_e^2 n_c)}\\)'
+      },
+      a0: {
+        textLabel: 'a0',
+        mathLabel: '\\(a_0\\)',
+        unit: 'dimensionless',
+        nonNegative: true,
+        relation: '\\(a_0 = \\sqrt{7.2992\\times10^{-19}\\,\\lambda^2 I}\\)'
+      },
+      n_c: {
+        textLabel: 'n_c',
+        mathLabel: '\\(n_c\\)',
+        unit: 'm<sup>-3</sup>',
+        positive: true,
+        relation: '\\(n_c = \\varepsilon_0 m_e (2\\pi c/\\lambda_{\\mathrm{m}})^2 / q_e^2\\)'
+      },
+    };
+
+    const inputs = Object.fromEntries(fieldOrder.map(id => [id, document.getElementById(id)]));
+    const statusWrap = document.getElementById('statusWrap');
+    const resultsGrid = document.getElementById('resultsGrid');
+    const solvedCountPill = document.getElementById('solvedCountPill');
+    const themeToggle = document.getElementById('themeToggle');
+    const formulaDetails = () => Array.from(document.querySelectorAll('.formula-detail'));
+    const toggleFormulasBtn = document.getElementById('toggleFormulasBtn');
+
+    function parseNumber(text) {
+      const raw = String(text ?? '').trim();
+      if (!raw) return null;
+      const normalized = raw.replace(/,/g, '');
+      const value = Number(normalized);
+      return Number.isFinite(value) ? value : NaN;
+    }
+
+    function formatNumber(value) {
+      if (value == null || !Number.isFinite(value)) return 'undefined';
+      const abs = Math.abs(value);
+      if (abs >= 1e4 || (abs > 0 && abs < 1e-3)) return value.toExponential(6);
+      return Number(value.toPrecision(8)).toString();
+    }
+
+    function nearlyEqual(a, b, relTol = 1e-6, absTol = 1e-12) {
+      return Math.abs(a - b) <= Math.max(absTol, relTol * Math.max(Math.abs(a), Math.abs(b)));
+    }
+
+    function encodeState(values) {
+      const params = new URLSearchParams();
+      for (const key of fieldOrder) {
+        const v = values[key];
+        if (v != null && v !== '') params.set(key, String(v));
+      }
+      return `${location.origin}${location.pathname}?${params.toString()}`;
+    }
+
+    function saveInputsToLocalStorage() {
+      const snapshot = Object.fromEntries(fieldOrder.map(k => [k, inputs[k].value.trim()]));
+      localStorage.setItem('laser-plasma-calculator-inputs', JSON.stringify(snapshot));
+    }
+
+    function loadInputsFromLocalStorage() {
+      try {
+        const raw = localStorage.getItem('laser-plasma-calculator-inputs');
+        if (!raw) return false;
+        const data = JSON.parse(raw);
+        for (const key of fieldOrder) {
+          if (typeof data[key] === 'string') inputs[key].value = data[key];
+        }
+        return true;
+      } catch {
+        return false;
+      }
+    }
+
+    function loadInputsFromURL() {
+      const params = new URLSearchParams(location.search);
+      let used = false;
+      for (const key of fieldOrder) {
+        if (params.has(key)) {
+          inputs[key].value = params.get(key);
+          used = true;
+        }
+      }
+      return used;
+    }
+
+    function updateURLSilently() {
+      history.replaceState({}, '', encodeState(getRawInputs()));
+    }
+
+    function resetAll() {
+      for (const key of fieldOrder) inputs[key].value = '';
+      inputs.lambda_nm.value = '800';
+      statusWrap.innerHTML = '';
+      resultsGrid.innerHTML = '';
+      solvedCountPill.textContent = '0 solved';
+      localStorage.removeItem('laser-plasma-calculator-inputs');
+      history.replaceState({}, '', `${location.origin}${location.pathname}`);
+      computeAndRender();
+    }
+
+    function setExample() {
+      const example = {
+        E: '1.0',
+        d_fwhm: '5',
+        w0: '',
+        t_fwhm: '30',
+        I: '',
+        lambda_nm: '800',
+        a0: '',
+        n_c: ''
+      };
+      for (const [key, value] of Object.entries(example)) inputs[key].value = value;
+      saveInputsToLocalStorage();
+      updateURLSilently();
+      computeAndRender();
+    }
+
+    function getRawInputs() {
+      return Object.fromEntries(fieldOrder.map(key => [key, inputs[key].value.trim()]));
+    }
+
+    function validate(values) {
+      const errors = [];
+      for (const key of fieldOrder) {
+        const meta = fieldMeta[key];
+        const v = values[key];
+        if (Number.isNaN(v)) {
+          errors.push(`Field ${meta.mathLabel} is not a valid number.`);
+          continue;
+        }
+        if (v == null) continue;
+        if (meta.positive && v <= 0) errors.push(`Field ${meta.mathLabel} must satisfy \\(> 0\\).`);
+        if (meta.nonNegative && v < 0) errors.push(`Field ${meta.mathLabel} must satisfy \\(\\ge 0\\).`);
+      }
+      return errors;
+    }
+
+    function computeState(rawValues) {
+      const vals = {};
+      const origin = {};
+      const messages = [];
+      const warnings = [];
+      const errors = [];
+
+      for (const key of fieldOrder) {
+        vals[key] = parseNumber(rawValues[key]);
+        origin[key] = vals[key] == null ? 'missing' : 'input';
+      }
+
+      errors.push(...validate(vals));
+      if (errors.length) return { vals, origin, messages, warnings, errors };
+
+      function derive(key, value, htmlMessage) {
+        if (!Number.isFinite(value)) return false;
+        if (vals[key] == null) {
+          vals[key] = value;
+          origin[key] = 'derived';
+          messages.push(htmlMessage);
+          return true;
+        }
+        return false;
+      }
+
+      function warnIfInconsistent(key, expected, htmlMessage, relTol = 1e-5) {
+        if (vals[key] == null || !Number.isFinite(expected)) return;
+        if (!nearlyEqual(vals[key], expected, relTol)) warnings.push(htmlMessage);
+      }
+
+      for (let iter = 0; iter < 10; iter++) {
+        let changed = false;
+
+        if (vals.d_fwhm != null && vals.w0 == null) {
+          changed = derive('w0', vals.d_fwhm / Math.sqrt(2 * LN2),
+            'Computed \\(w_0\\) from \\(d_{\\mathrm{fwhm}}\\) using \\(w_0 = d_{\\mathrm{fwhm}}/\\sqrt{2\\ln 2}\\).') || changed;
+        } else if (vals.w0 != null && vals.d_fwhm == null) {
+          changed = derive('d_fwhm', vals.w0 * Math.sqrt(2 * LN2),
+            'Computed \\(d_{\\mathrm{fwhm}}\\) from \\(w_0\\) using \\(d_{\\mathrm{fwhm}} = w_0\\sqrt{2\\ln 2}\\).') || changed;
+        } else if (vals.d_fwhm != null && vals.w0 != null) {
+          warnIfInconsistent('w0', vals.d_fwhm / Math.sqrt(2 * LN2),
+            `Your typed \\(w_0\\) is inconsistent with \\(d_{\\mathrm{fwhm}}\\). Expected approximately <span class="mono">${formatNumber(vals.d_fwhm / Math.sqrt(2 * LN2))}</span> from \\(w_0 = d_{\\mathrm{fwhm}}/\\sqrt{2\\ln 2}\\).`);
+        }
+
+        const lambda_um = vals.lambda_nm != null ? vals.lambda_nm * 1e-3 : null;
+        const lambda_m = vals.lambda_nm != null ? vals.lambda_nm * 1e-9 : null;
+
+        if (vals.I == null && vals.a0 != null && lambda_um != null) {
+          changed = derive('I', (vals.a0 ** 2) / (A0_I_LAMBDA_FACTOR * lambda_um ** 2),
+            'Computed \\(I\\) from \\(a_0\\) and \\(\\lambda\\) using \\(I = a_0^2 / [7.2992\\times10^{-19}\\,\\lambda^2]\\).') || changed;
+        } else if (vals.a0 == null && vals.I != null && lambda_um != null) {
+          changed = derive('a0', Math.sqrt(A0_I_LAMBDA_FACTOR * lambda_um ** 2 * vals.I),
+            'Computed \\(a_0\\) from \\(I\\) and \\(\\lambda\\) using \\(a_0 = \\sqrt{7.2992\\times10^{-19}\\,\\lambda^2 I}\\).') || changed;
+        } else if (vals.lambda_nm == null && vals.a0 != null && vals.I != null && vals.I > 0) {
+          changed = derive('lambda_nm', Math.sqrt((vals.a0 ** 2) / (A0_I_LAMBDA_FACTOR * vals.I)) * 1e3,
+            'Computed \\(\\lambda\\) from \\(a_0\\) and \\(I\\) using \\(\\lambda = \\sqrt{a_0^2/(7.2992\\times10^{-19} I)}\\).') || changed;
+        } else if (vals.I != null && vals.a0 != null && lambda_um != null) {
+          warnIfInconsistent('a0', Math.sqrt(A0_I_LAMBDA_FACTOR * lambda_um ** 2 * vals.I),
+            `Your typed \\(a_0\\) is inconsistent with \\(I\\) and \\(\\lambda\\). Expected approximately <span class="mono">${formatNumber(Math.sqrt(A0_I_LAMBDA_FACTOR * lambda_um ** 2 * vals.I))}</span>.`);
+        }
+
+        const lambda_m_after = vals.lambda_nm != null ? vals.lambda_nm * 1e-9 : null;
+        if (vals.n_c == null && lambda_m_after != null) {
+          changed = derive('n_c', (epsilon0 * me * (2 * Math.PI * c / lambda_m_after) ** 2) / (qe ** 2),
+            'Computed \\(n_c\\) from \\(\\lambda\\) using the critical-density relation \\(n_c = \\varepsilon_0 m_e (2\\pi c/\\lambda_{\\mathrm{m}})^2 / q_e^2\\).') || changed;
+        } else if (vals.lambda_nm == null && vals.n_c != null && vals.n_c > 0) {
+          changed = derive('lambda_nm', 2 * Math.PI * c * Math.sqrt(epsilon0 * me / (qe ** 2 * vals.n_c)) * 1e9,
+            'Computed \\(\\lambda\\) from \\(n_c\\) using \\(\\lambda_{\\mathrm{m}} = 2\\pi c\\sqrt{\\varepsilon_0 m_e/(q_e^2 n_c)}\\).') || changed;
+        } else if (vals.n_c != null && lambda_m_after != null) {
+          warnIfInconsistent('n_c', (epsilon0 * me * (2 * Math.PI * c / lambda_m_after) ** 2) / (qe ** 2),
+            `Your typed \\(n_c\\) is inconsistent with \\(\\lambda\\). Expected approximately <span class="mono">${formatNumber((epsilon0 * me * (2 * Math.PI * c / lambda_m_after) ** 2) / (qe ** 2))}</span>.`);
+        }
+
+        if (vals.d_fwhm != null) {
+          const d_cm = vals.d_fwhm * 1e-4;
+          const countKnown = [vals.E, vals.t_fwhm, vals.I].filter(v => v != null).length;
+          if (countKnown >= 2) {
+            if (vals.E == null && vals.I != null && vals.t_fwhm != null) {
+              changed = derive('E', (vals.I / GAUSSIAN_FACTOR) * vals.t_fwhm * (d_cm ** 2) * 1e-15,
+                'Computed \\(E\\) from \\(I\\), \\(d_{\\mathrm{fwhm}}\\), and \\(t_{\\mathrm{fwhm}}\\).') || changed;
+            }
+            if (vals.I == null && vals.E != null && vals.t_fwhm != null) {
+              changed = derive('I', vals.E * GAUSSIAN_FACTOR / (vals.t_fwhm * (d_cm ** 2) * 1e-15),
+                'Computed \\(I\\) from \\(E\\), \\(d_{\\mathrm{fwhm}}\\), and \\(t_{\\mathrm{fwhm}}\\).') || changed;
+            }
+            if (vals.t_fwhm == null && vals.E != null && vals.I != null) {
+              changed = derive('t_fwhm', vals.E * GAUSSIAN_FACTOR / (vals.I * (d_cm ** 2) * 1e-15),
+                'Computed \\(t_{\\mathrm{fwhm}}\\) from \\(E\\), \\(d_{\\mathrm{fwhm}}\\), and \\(I\\).') || changed;
+            }
+          }
+          if (vals.E != null && vals.I != null && vals.t_fwhm != null) {
+            const expectedE = (vals.I / GAUSSIAN_FACTOR) * vals.t_fwhm * (d_cm ** 2) * 1e-15;
+            warnIfInconsistent('E', expectedE,
+              `Your typed \\(E\\) is inconsistent with \\(I\\), \\(d_{\\mathrm{fwhm}}\\), and \\(t_{\\mathrm{fwhm}}\\). Expected approximately <span class="mono">${formatNumber(expectedE)}</span>.`);
+          }
+        }
+
+        if (!changed) break;
+      }
+
+      return { vals, origin, messages, warnings, errors };
+    }
+
+    function renderStatus(kind, title, items) {
+      if (!items.length) return '';
+      return `<div class="status-box ${kind}"><h3>${title}</h3><ul>${items.map(item => `<li>${item}</li>`).join('')}</ul></div>`;
+    }
+
+    function renderResults(state) {
+      const cards = fieldOrder.map((key) => {
+        const meta = fieldMeta[key];
+        const value = state.vals[key];
+        const cardState = value == null ? 'missing' : state.origin[key];
+        const tagText = cardState === 'input' ? 'Input' : cardState === 'derived' ? 'Derived' : 'Missing';
+        const relation = cardState === 'derived' ? meta.relation : '';
+        return `
+          <article class="result-card">
+            <div class="result-head">
+              <div class="result-label">${meta.mathLabel}</div>
+              <div class="tag ${cardState}">${tagText}</div>
+            </div>
+            <div class="result-value">${value == null ? 'undefined' : formatNumber(value)}</div>
+            <div class="result-unit">${meta.unit}</div>
+            <div class="result-relation">${relation}</div>
+          </article>
+        `;
+      }).join('');
+      resultsGrid.innerHTML = cards;
+      solvedCountPill.textContent = `${fieldOrder.filter(key => state.vals[key] != null).length} solved`;
+    }
+
+    function queueMathRender() {
+      requestAnimationFrame(() => {
+        if (!window.renderMathInElement) return;
+        window.renderMathInElement(document.body, {
+          delimiters: [
+            { left: '$$', right: '$$', display: true },
+            { left: '$', right: '$', display: false },
+            { left: '\\(', right: '\\)', display: false },
+            { left: '\\[', right: '\\]', display: true }
+          ],
+          throwOnError: false,
+          ignoredTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code', 'option']
+        });
+      });
+    }
+
+    function computeAndRender() {
+      saveInputsToLocalStorage();
+      updateURLSilently();
+      const state = computeState(getRawInputs());
+      statusWrap.innerHTML = [
+        renderStatus('error', 'Input errors', state.errors),
+        renderStatus('success', 'Derived updates', state.messages),
+        renderStatus('warning', 'Consistency warnings', state.warnings),
+      ].join('');
+      renderResults(state);
+      queueMathRender();
+      return state;
+    }
+
+    async function copyText(text, button) {
+      try {
+        await navigator.clipboard.writeText(text);
+        const original = button.textContent;
+        button.textContent = 'Copied';
+        setTimeout(() => button.textContent = original, 1200);
+      } catch {
+        alert('Copy failed in this browser context. Please copy manually.');
+      }
+    }
+
+    function copyResults(button) {
+      const state = computeAndRender();
+      if (state.errors.length) return;
+      const lines = fieldOrder.map(key => `${fieldMeta[key].textLabel} = ${state.vals[key] == null ? 'undefined' : formatNumber(state.vals[key])} ${fieldMeta[key].unit.replace(/<[^>]+>/g, '')}`);
+      copyText(lines.join('\n'), button);
+    }
+
+    function copyShareLink(button) {
+      saveInputsToLocalStorage();
+      updateURLSilently();
+      copyText(location.href, button);
+    }
+
+    function applyTheme(theme) {
+      document.documentElement.setAttribute('data-theme', theme);
+      localStorage.setItem('laser-plasma-calculator-theme', theme);
+      themeToggle.textContent = theme === 'dark' ? 'Light Mode' : 'Dark Mode';
+    }
+
+    function loadTheme() {
+      const saved = localStorage.getItem('laser-plasma-calculator-theme');
+      if (saved === 'light' || saved === 'dark') return saved;
+      return 'dark';
+    }
+
+    function syncFormulaToggleLabel() {
+      const anyOpen = formulaDetails().some(detail => detail.open);
+      toggleFormulasBtn.textContent = anyOpen ? 'Collapse All' : 'Expand All';
+    }
+
+    function toggleAllFormulas() {
+      const anyOpen = formulaDetails().some(detail => detail.open);
+      formulaDetails().forEach(detail => detail.open = !anyOpen);
+      syncFormulaToggleLabel();
+    }
+
+    function bindButton(id, handler) {
+      document.getElementById(id).addEventListener('click', handler);
+    }
+
+    for (const key of fieldOrder) {
+      inputs[key].addEventListener('input', () => {
+        saveInputsToLocalStorage();
+        updateURLSilently();
+      });
+      inputs[key].addEventListener('keydown', event => {
+        if (event.key === 'Enter') computeAndRender();
+      });
+    }
+
+    bindButton('computeBtn', computeAndRender);
+    bindButton('computeBtnTop', computeAndRender);
+    bindButton('exampleBtn', setExample);
+    bindButton('resetBtn', resetAll);
+    bindButton('copyResultsBtn', e => copyResults(e.currentTarget));
+    bindButton('copyShareBtn', e => copyShareLink(e.currentTarget));
+    bindButton('themeToggle', () => applyTheme(document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'));
+    bindButton('toggleFormulasBtn', toggleAllFormulas);
+
+    document.addEventListener('DOMContentLoaded', () => {
+      applyTheme(loadTheme());
+      const fromURL = loadInputsFromURL();
+      if (!fromURL) loadInputsFromLocalStorage();
+      formulaDetails().forEach(detail => detail.addEventListener('toggle', syncFormulaToggleLabel));
+      syncFormulaToggleLabel();
+      computeAndRender();
+      queueMathRender();
+    });
+
+    window.addEventListener('load', queueMathRender);
+  </script>
+</body>
+</html>
