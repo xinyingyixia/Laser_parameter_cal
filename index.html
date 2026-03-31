@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="Laser plasma calculator for pulse energy, focal spot, pulse duration, intensity, a0, wavelength, critical density, and electron temperature conversion." />
+  <meta name="description" content="Laser plasma calculator for pulse energy, focal spot, pulse duration, intensity, a0, wavelength, critical density, grid spacing, PPC, and electron temperature conversion." />
   <title>Laser Plasma Calculator</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -691,6 +691,108 @@
       min-width: 138px;
     }
 
+    .export-extra-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+      margin-top: 14px;
+    }
+
+    .export-option-card {
+      padding: 14px;
+      border-radius: 18px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.03);
+    }
+
+    html[data-theme="light"] .export-option-card {
+      background: rgba(15, 23, 42, 0.02);
+    }
+
+    .export-option-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .export-option-title {
+      margin: 0;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .export-option-caption {
+      margin: 4px 0 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.55;
+    }
+
+    .export-mini-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .export-mini-grid .select-wrap {
+      width: 100%;
+      min-width: 0;
+    }
+
+    .unit-chip {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .ppc-default-grid,
+    .custom-ppc-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .ppc-row {
+      display: grid;
+      grid-template-columns: minmax(120px, 1.1fr) minmax(0, 1fr) auto;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .ppc-row-default {
+      grid-template-columns: minmax(120px, 1.1fr) minmax(0, 1fr);
+    }
+
+    .ppc-row .select-wrap {
+      width: 100%;
+      min-width: 0;
+    }
+
+    .ppc-label-chip {
+      display: flex;
+      align-items: center;
+      min-height: 46px;
+      padding: 0 14px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      background: var(--input-bg);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .ppc-row .btn-ghost {
+      padding: 12px 14px;
+    }
+
+    .export-helper {
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.55;
+    }
+
     .formula-reference-box {
       margin-bottom: 16px;
       padding: 16px;
@@ -754,6 +856,22 @@
       font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     }
 
+    .snapshot-export.with-columns {
+      display: flex;
+      flex-wrap: nowrap;
+      gap: 34px;
+      width: max-content;
+      max-width: none;
+      align-items: flex-start;
+    }
+
+    .snapshot-column {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      min-width: max-content;
+    }
+
     .snapshot-export.bg-white {
       background: #ffffff;
     }
@@ -802,7 +920,8 @@
 
       .input-grid,
       .results-grid,
-      .formula-reference-grid {
+      .formula-reference-grid,
+      .export-extra-grid {
         grid-template-columns: 1fr;
       }
 
@@ -814,6 +933,15 @@
       .export-panel-head {
         flex-direction: column;
         align-items: stretch;
+      }
+
+      .export-mini-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .ppc-row,
+      .ppc-row-default {
+        grid-template-columns: 1fr;
       }
 
       button,
@@ -914,6 +1042,7 @@
                 <p class="export-panel-caption">Rendered equations only.</p>
               </div>
             </div>
+
             <div class="export-actions">
               <div class="select-wrap">
                 <label for="exportFormat">Format</label>
@@ -935,6 +1064,98 @@
               </div>
               <button class="btn-secondary" id="copyImageBtn">Copy</button>
               <button class="btn-secondary" id="saveImageBtn">Save</button>
+            </div>
+
+            <div class="export-extra-grid">
+              <div class="export-option-card">
+                <div class="export-option-head">
+                  <div>
+                    <h4 class="export-option-title">Grid spacing</h4>
+                    <p class="export-option-caption">Optional. Only the directions you fill will be exported.</p>
+                  </div>
+                  <div class="pill">nm</div>
+                </div>
+
+                <div class="export-mini-grid">
+                  <div class="select-wrap select-wrap-number">
+                    <label for="grid_dx_nm">\(\Delta x\)</label>
+                    <input id="grid_dx_nm" type="number" min="0" step="any" inputmode="decimal" placeholder="20" />
+                    <span class="unit-chip">nm</span>
+                  </div>
+                  <div class="select-wrap select-wrap-number">
+                    <label for="grid_dy_nm">\(\Delta y\)</label>
+                    <input id="grid_dy_nm" type="number" min="0" step="any" inputmode="decimal" placeholder="20" />
+                    <span class="unit-chip">nm</span>
+                  </div>
+                  <div class="select-wrap select-wrap-number">
+                    <label for="grid_dz_nm">\(\Delta z\)</label>
+                    <input id="grid_dz_nm" type="number" min="0" step="any" inputmode="decimal" placeholder="20" />
+                    <span class="unit-chip">nm</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="export-option-card">
+                <div class="export-option-head">
+                  <div>
+                    <h4 class="export-option-title">Particle PPC</h4>
+                    <p class="export-option-caption">Optional. Filled species only will be exported.</p>
+                  </div>
+                  <div class="pill">Customizable</div>
+                </div>
+
+                <div class="ppc-default-grid">
+                  <div class="ppc-row ppc-row-default">
+                    <div class="ppc-label-chip">\(\mathrm{PPC}_{e^-}\)</div>
+                    <div class="select-wrap select-wrap-number">
+                      <label for="ppc_e">Value</label>
+                      <input id="ppc_e" type="number" min="0" step="1" inputmode="numeric" placeholder="e.g. 64" />
+                    </div>
+                  </div>
+
+                  <div class="ppc-row ppc-row-default">
+                    <div class="ppc-label-chip">\(\mathrm{PPC}_{p^+}\)</div>
+                    <div class="select-wrap select-wrap-number">
+                      <label for="ppc_p">Value</label>
+                      <input id="ppc_p" type="number" min="0" step="1" inputmode="numeric" placeholder="e.g. 64" />
+                    </div>
+                  </div>
+
+                  <div class="ppc-row ppc-row-default">
+                    <div class="ppc-label-chip">\(\mathrm{PPC}_{C}\)</div>
+                    <div class="select-wrap select-wrap-number">
+                      <label for="ppc_c">Value</label>
+                      <input id="ppc_c" type="number" min="0" step="1" inputmode="numeric" placeholder="e.g. 16" />
+                    </div>
+                  </div>
+
+                  <div class="ppc-row ppc-row-default">
+                    <div class="ppc-label-chip">\(\mathrm{PPC}_{O^+}\)</div>
+                    <div class="select-wrap select-wrap-number">
+                      <label for="ppc_o">Value</label>
+                      <input id="ppc_o" type="number" min="0" step="1" inputmode="numeric" placeholder="e.g. 48" />
+                    </div>
+                  </div>
+
+                  <div class="ppc-row ppc-row-default">
+                    <div class="ppc-label-chip">\(\mathrm{PPC}_{Au}\)</div>
+                    <div class="select-wrap select-wrap-number">
+                      <label for="ppc_au">Value</label>
+                      <input id="ppc_au" type="number" min="0" step="1" inputmode="numeric" placeholder="e.g. 8" />
+                    </div>
+                  </div>
+                </div>
+
+                <div id="customPpcList" class="custom-ppc-list"></div>
+
+                <div class="button-row" style="margin-top: 12px;">
+                  <button class="btn-ghost" id="addCustomPpcBtn" type="button">Add Particle</button>
+                </div>
+
+                <p class="export-helper">
+                  Custom label examples: <span class="mono">Al^{11+}</span>, <span class="mono">C^{6+}</span>, <span class="mono">O+</span>.
+                </p>
+              </div>
             </div>
           </div>
 
@@ -1122,6 +1343,21 @@
       },
     };
 
+    const FIXED_EXPORT_FIELDS = [
+      "grid_dx_nm", "grid_dy_nm", "grid_dz_nm",
+      "ppc_e", "ppc_p", "ppc_c", "ppc_o", "ppc_au"
+    ];
+
+    const DEFAULT_PPC_META = [
+      { key: 'ppc_e', tex: 'e^-' },
+      { key: 'ppc_p', tex: 'p^+' },
+      { key: 'ppc_c', tex: '\\mathrm{C}' },
+      { key: 'ppc_o', tex: '\\mathrm{O}^+' },
+      { key: 'ppc_au', tex: '\\mathrm{Au}' }
+    ];
+
+    const EXPORT_STORAGE_KEY = 'laser-plasma-calculator-export';
+
     const inputs = Object.fromEntries(fieldOrder.map(id => [id, document.getElementById(id)]));
     const statusWrap = document.getElementById('statusWrap');
     const resultsGrid = document.getElementById('resultsGrid');
@@ -1133,6 +1369,12 @@
     const exportBackground = document.getElementById('exportBackground');
     const exportDecimals = document.getElementById('exportDecimals');
     const snapshotStage = document.getElementById('snapshotStage');
+
+    const fixedExportInputs = Object.fromEntries(
+      FIXED_EXPORT_FIELDS.map(id => [id, document.getElementById(id)])
+    );
+    const customPpcList = document.getElementById('customPpcList');
+    const addCustomPpcBtn = document.getElementById('addCustomPpcBtn');
 
     function parseNumber(text) {
       const raw = String(text ?? '').trim();
@@ -1160,13 +1402,31 @@
       return Math.abs(a - b) <= Math.max(absTol, relTol * Math.max(Math.abs(a), Math.abs(b)));
     }
 
-    function encodeState(values) {
+    function encodeState(values, exportValues = getExportRawState()) {
       const params = new URLSearchParams();
+
       for (const key of fieldOrder) {
         const v = values[key];
         if (v != null && v !== '') params.set(key, String(v));
       }
-      return `${location.origin}${location.pathname}?${params.toString()}`;
+
+      for (const key of FIXED_EXPORT_FIELDS) {
+        const v = exportValues[key];
+        if (v != null && String(v).trim() !== '') params.set(key, String(v).trim());
+      }
+
+      const customRows = Array.isArray(exportValues.custom_ppc)
+        ? exportValues.custom_ppc.filter(item => item.label || item.value)
+        : [];
+
+      if (customRows.length) {
+        params.set('custom_ppc', JSON.stringify(customRows));
+      }
+
+      const query = params.toString();
+      return query
+        ? `${location.origin}${location.pathname}?${params.toString()}`
+        : `${location.origin}${location.pathname}`;
     }
 
     function saveInputsToLocalStorage() {
@@ -1201,16 +1461,22 @@
     }
 
     function updateURLSilently() {
-      history.replaceState({}, '', encodeState(getRawInputs()));
+      history.replaceState({}, '', encodeState(getRawInputs(), getExportRawState()));
     }
 
     function resetAll() {
       for (const key of fieldOrder) inputs[key].value = '';
       inputs.lambda_nm.value = '800';
+
+      applyExportState({});
+
       statusWrap.innerHTML = '';
       resultsGrid.innerHTML = '';
       solvedCountPill.textContent = '0 solved';
+
       localStorage.removeItem('laser-plasma-calculator-inputs');
+      localStorage.removeItem(EXPORT_STORAGE_KEY);
+
       history.replaceState({}, '', `${location.origin}${location.pathname}`);
       computeAndRender();
     }
@@ -1236,6 +1502,200 @@
 
     function getRawInputs() {
       return Object.fromEntries(fieldOrder.map(key => [key, inputs[key].value.trim()]));
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? '').replace(/[&<>"']/g, ch => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
+      }[ch]));
+    }
+
+    function getFixedExportRawValues() {
+      return Object.fromEntries(
+        FIXED_EXPORT_FIELDS.map(key => [key, fixedExportInputs[key]?.value.trim() ?? ''])
+      );
+    }
+
+    function getCustomPpcState() {
+      return Array.from(customPpcList.querySelectorAll('.custom-ppc-row'))
+        .map(row => ({
+          label: row.querySelector('[data-role="custom-ppc-label"]')?.value.trim() ?? '',
+          value: row.querySelector('[data-role="custom-ppc-value"]')?.value.trim() ?? ''
+        }))
+        .filter(item => item.label || item.value);
+    }
+
+    function getExportRawState() {
+      return {
+        ...getFixedExportRawValues(),
+        custom_ppc: getCustomPpcState()
+      };
+    }
+
+    function saveExportStateToLocalStorage() {
+      localStorage.setItem(EXPORT_STORAGE_KEY, JSON.stringify(getExportRawState()));
+    }
+
+    function createCustomPpcRow(data = {}) {
+      const row = document.createElement('div');
+      row.className = 'ppc-row custom-ppc-row';
+      row.innerHTML = `
+        <div class="select-wrap">
+          <label>Species</label>
+          <input
+            type="text"
+            data-role="custom-ppc-label"
+            placeholder="e.g. Al^{11+}"
+            value="${escapeHtml(data.label ?? '')}"
+          />
+        </div>
+        <div class="select-wrap select-wrap-number">
+          <label>Value</label>
+          <input
+            type="number"
+            min="0"
+            step="1"
+            inputmode="numeric"
+            data-role="custom-ppc-value"
+            placeholder="e.g. 32"
+            value="${escapeHtml(data.value ?? '')}"
+          />
+        </div>
+        <button class="btn-ghost" type="button" data-role="remove-custom-ppc">Remove</button>
+      `;
+
+      row.querySelectorAll('input').forEach(input => {
+        input.addEventListener('input', () => {
+          saveExportStateToLocalStorage();
+          updateURLSilently();
+        });
+      });
+
+      row.querySelector('[data-role="remove-custom-ppc"]').addEventListener('click', () => {
+        row.remove();
+        saveExportStateToLocalStorage();
+        updateURLSilently();
+      });
+
+      customPpcList.appendChild(row);
+      return row;
+    }
+
+    function applyExportState(data = {}) {
+      for (const key of FIXED_EXPORT_FIELDS) {
+        if (fixedExportInputs[key]) {
+          fixedExportInputs[key].value = typeof data[key] === 'string' ? data[key] : '';
+        }
+      }
+
+      customPpcList.innerHTML = '';
+      const customRows = Array.isArray(data.custom_ppc) ? data.custom_ppc : [];
+      customRows.forEach(row => createCustomPpcRow(row));
+    }
+
+    function loadExportStateFromLocalStorage() {
+      try {
+        const raw = localStorage.getItem(EXPORT_STORAGE_KEY);
+        if (!raw) return false;
+        const data = JSON.parse(raw);
+        applyExportState(data);
+        return true;
+      } catch {
+        return false;
+      }
+    }
+
+    function loadExportStateFromURL() {
+      const params = new URLSearchParams(location.search);
+      const data = {};
+      let used = false;
+
+      for (const key of FIXED_EXPORT_FIELDS) {
+        if (params.has(key)) {
+          data[key] = params.get(key);
+          used = true;
+        }
+      }
+
+      if (params.has('custom_ppc')) {
+        try {
+          data.custom_ppc = JSON.parse(params.get('custom_ppc'));
+          used = true;
+        } catch {}
+      }
+
+      if (used) applyExportState(data);
+      return used;
+    }
+
+    function getExportConfig() {
+      const fixed = {};
+      for (const key of FIXED_EXPORT_FIELDS) {
+        fixed[key] = parseNumber(fixedExportInputs[key]?.value ?? '');
+      }
+
+      const custom = getCustomPpcState()
+        .map(item => ({
+          label: item.label,
+          value: parseNumber(item.value)
+        }))
+        .filter(item => item.label && Number.isFinite(item.value) && item.value > 0);
+
+      return {
+        ...fixed,
+        custom_ppc: custom
+      };
+    }
+
+    function toParticleSubscriptTex(raw) {
+      const text = String(raw ?? '').trim();
+      if (!text) return '';
+
+      if (/[\\^_{}]/.test(text)) return text;
+
+      const match = text.match(/^([A-Za-z][A-Za-z0-9]*)([0-9]*)([+-]+)$/);
+      if (match) {
+        const [, species, chargeNumber, chargeSign] = match;
+        return `\\mathrm{${species}}^{${chargeNumber || ''}${chargeSign}}`;
+      }
+
+      return `\\mathrm{${text.replace(/\s+/g, '\\ ')}}`;
+    }
+
+    function buildGridTex(config, decimals = 2) {
+      const items = [
+        { key: 'grid_dx_nm', tex: '\\Delta x' },
+        { key: 'grid_dy_nm', tex: '\\Delta y' },
+        { key: 'grid_dz_nm', tex: '\\Delta z' }
+      ];
+
+      return items
+        .filter(item => Number.isFinite(config[item.key]) && config[item.key] > 0)
+        .map(item => `${item.tex} = ${formatNumberForLatex(config[item.key], decimals)}\\,\\mathrm{nm}`);
+    }
+
+    function buildPpcTex(config, decimals = 2) {
+      const fixed = DEFAULT_PPC_META
+        .filter(item => Number.isFinite(config[item.key]) && config[item.key] > 0)
+        .map(item => `\\mathrm{PPC}_{${item.tex}} = ${formatNumberForLatex(config[item.key], decimals)}`);
+
+      const custom = config.custom_ppc.map(item =>
+        `\\mathrm{PPC}_{${toParticleSubscriptTex(item.label)}} = ${formatNumberForLatex(item.value, decimals)}`
+      );
+
+      return [...fixed, ...custom];
+    }
+
+    function chunkArray(items, size) {
+      const out = [];
+      for (let i = 0; i < items.length; i += size) {
+        out.push(items.slice(i, i + size));
+      }
+      return out;
     }
 
     function validate(values) {
@@ -1481,6 +1941,7 @@
 
     function computeAndRender() {
       saveInputsToLocalStorage();
+      saveExportStateToLocalStorage();
       updateURLSilently();
       const state = computeState(getRawInputs());
       statusWrap.innerHTML = [
@@ -1513,6 +1974,7 @@
 
     function copyShareLink(button) {
       saveInputsToLocalStorage();
+      saveExportStateToLocalStorage();
       updateURLSilently();
       copyText(location.href, button);
     }
@@ -1562,13 +2024,39 @@
       const wrapper = document.createElement('div');
       const bgMode = exportBackground?.value === 'transparent' ? 'bg-transparent' : 'bg-white';
       wrapper.className = `snapshot-export ${bgMode}`;
-      const parameterBlocks = buildParameterTex(state, getExportDecimals()).map(({ tex }) => `
+
+      const decimals = getExportDecimals();
+      const parameterTex = buildParameterTex(state, decimals).map(({ tex }) => tex);
+      const exportConfig = getExportConfig();
+      const gridTex = buildGridTex(exportConfig, decimals);
+      const ppcTex = buildPpcTex(exportConfig, decimals);
+      const hasExtras = gridTex.length > 0 || ppcTex.length > 0;
+
+      const renderTex = (tex) => `
         <div class="snapshot-equation">
           ${window.katex ? window.katex.renderToString(tex, { throwOnError: false, displayMode: false }) : tex}
         </div>
+      `;
+
+      if (!hasExtras) {
+        wrapper.innerHTML = parameterTex.map(renderTex).join('');
+        snapshotStage.appendChild(wrapper);
+        return wrapper;
+      }
+
+      wrapper.classList.add('with-columns');
+
+      const columns = [];
+      if (parameterTex.length) columns.push(...chunkArray(parameterTex, 3));
+      if (gridTex.length) columns.push(gridTex);
+      if (ppcTex.length) columns.push(...chunkArray(ppcTex, 4));
+
+      wrapper.innerHTML = columns.map(column => `
+        <div class="snapshot-column">
+          ${column.map(renderTex).join('')}
+        </div>
       `).join('');
 
-      wrapper.innerHTML = parameterBlocks;
       snapshotStage.appendChild(wrapper);
       return wrapper;
     }
@@ -1701,6 +2189,19 @@
       });
     }
 
+    for (const key of FIXED_EXPORT_FIELDS) {
+      fixedExportInputs[key].addEventListener('input', () => {
+        saveExportStateToLocalStorage();
+        updateURLSilently();
+      });
+    }
+
+    addCustomPpcBtn.addEventListener('click', () => {
+      createCustomPpcRow({});
+      saveExportStateToLocalStorage();
+      updateURLSilently();
+    });
+
     bindButton('computeBtn', computeAndRender);
     bindButton('computeBtnTop', computeAndRender);
     bindButton('exampleBtn', setExample);
@@ -1714,8 +2215,13 @@
 
     document.addEventListener('DOMContentLoaded', () => {
       applyTheme(loadTheme());
+
       const fromURL = loadInputsFromURL();
+      const exportFromURL = loadExportStateFromURL();
+
       if (!fromURL) loadInputsFromLocalStorage();
+      if (!exportFromURL) loadExportStateFromLocalStorage();
+
       formulaDetails().forEach(detail => detail.addEventListener('toggle', syncFormulaToggleLabel));
       syncFormulaToggleLabel();
       computeAndRender();
